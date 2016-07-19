@@ -235,7 +235,6 @@ func Proc0(g *G) {
         IntLoc2 = 7 * (IntLoc3 - IntLoc2) - IntLoc1;
         IntLoc1 = Proc2(g, IntLoc1);
     }
-    finish_chan <- 0
 }
 
 var finish_chan chan int = make(chan int, 10)
@@ -244,15 +243,18 @@ var core_count int = 8
 func main() {
     runtime.GOMAXPROCS(core_count)
 
-    ts := time.Now()
     for i := 0; i < core_count; i ++ {
-        go Proc0(NewG())
+        go func (idx int) {
+            ts := time.Now()
+            Proc0(NewG())
+            tm := time.Now().Sub(ts)
+            float_tm := float64(tm) / 1e9
+            fmt.Printf("[%d]Time Used %f\n", idx, float_tm)
+            fmt.Printf("[%d]This machine benchmarks at %f GoStones/second\n", idx, LOOPS / float_tm);
+            finish_chan <- 0
+        }(i)
     }
     for i := 0; i < core_count; i ++ {
         <- finish_chan
     }
-    tm := time.Now().Sub(ts)
-    float_tm := float64(tm) / 1e9
-    fmt.Printf("Time Used %f\n", float_tm)
-    fmt.Printf("This machine benchmarks at %f GoStones/second", LOOPS / float_tm);
 }
