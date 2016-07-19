@@ -254,5 +254,5 @@ func main() {
     tm := time.Now().Sub(ts)
     float_tm := float64(tm) / 1e9
     fmt.Printf("Time Used %f\n", float_tm)
-    fmt.Printf("This machine benchmarks at %f GoStones/second", LOOPS / float_tm / float64(core_count));
+    fmt.Printf("This machine benchmarks at %f GoStones/second", LOOPS / float_tm);
 }
