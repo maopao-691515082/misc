@@ -1,0 +1,74 @@
+import sys, concurrent, socket;
+
+void log(String msg)
+{
+    sys.stdout.write("%s\n".format(msg));
+}
+
+final class Client : concurrent.Coroutine
+{
+    socket.TcpSocket m_sock;
+
+    Client(socket.TcpSocket sock) : super()
+    {
+        m_sock = sock;
+    }
+
+    int run()
+    {
+        while (true)
+        {
+            String s = null;
+            socket.SocketError err = m_sock.recv(10000, s);
+            if (err != null)
+            {
+                log("recv error [%s]".format(err.err_msg()));
+                return -1;
+            }
+            if (s.size() == 0)
+            {
+                log("client over");
+                return -1;
+            }
+            err = m_sock.send_all(s);
+            if (err != null)
+            {
+                log("send error [%s]".format(err.err_msg()));
+                return -1;
+            }
+        }
+
+        return 0;
+    }
+}
+
+public int main(String[] argv)
+{
+    socket.TcpSocket listen_sock = null;
+    socket.SocketError err = socket.create_tcp_listen_sock(null, 9999, 10, listen_sock);
+    if (err != null)
+    {
+        log("create listen sock failed [%s]".format(err.err_msg()));
+        return 1;
+    }
+
+    while (true)
+    {
+        socket.TcpSocket new_client = null;
+        err = listen_sock.accept(new_client);
+        if (err != null)
+        {
+            log("accept failed [%s]".format(err.err_msg()));
+            return 1;
+        }
+        Client c = new Client(new_client);
+        int rc = c.start();
+        if (rc != 0)
+        {
+            log("start client failed [%s]".format(rc));
+            return 1;
+        }
+    }
+
+    return 0;
+}
