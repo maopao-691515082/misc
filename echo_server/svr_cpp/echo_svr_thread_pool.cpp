@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>

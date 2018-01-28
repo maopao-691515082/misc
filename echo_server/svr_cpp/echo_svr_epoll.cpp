@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -76,7 +77,7 @@ int main()
                     exit_prog("accept failed");
                 }
                 ev.events = EPOLLIN;
-                ev.data.fd = conn_sock;
+                ev.data.fd = c;
                 if (epoll_ctl(ep, EPOLL_CTL_ADD, c, &ev) == -1)
                 {
                     exit_prog("epoll_ctl failed");
