@@ -19,7 +19,7 @@ func work(conn net.Conn) {
 }
 
 func main() {
-	listener, err := net.Listen("tcp", "localhost:9999")
+	listener, err := net.Listen("tcp", ":9999")
 	if err != nil {
 		panic(err.Error())
 	}

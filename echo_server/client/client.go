@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	svr = "localhost:9999"
+	svr = "10.4.140.13:9999"
 	data = []byte("abcdefghijklmnopqrstuvwxyz")
 )
 
@@ -54,7 +54,7 @@ func loopTest() {
 }
 
 func main() {
-	for i := 0; i < 6; i ++ {
+	for i := 0; i < 100; i ++ {
 		go loopTest()
 	}
 	select {}
