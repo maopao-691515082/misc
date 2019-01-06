@@ -1,0 +1,64 @@
+import time, net, math/rand;
+
+void log(String msg)
+{
+    println("[%s] %s".(time.format_time("2006-01-02 15:04:05", time.time()), msg));
+}
+
+void work(net.TcpConn conn)
+{
+    defer conn.close();
+
+    log("start calc");
+
+    var buf = new char[1];
+    if (conn.read(buf) != 1 || buf[0] != 0x12)
+    {
+        log("invalid req hdr");
+        return;
+    }
+    if (conn.read(buf) != 1 || buf[0] == 0)
+    {
+        log("invalid board");
+        return;
+    }
+    long board_size = (long)buf[0];
+    var board = new char[board_size][board_size];
+    foreach (var row: board.iter())
+    {
+        buf = row;
+        while (buf.size() > 0)
+        {
+            long sz = conn.read(buf);
+            if (sz == 0)
+            {
+                log("recv board error");
+                return;
+            }
+            buf = buf[sz :];
+        }
+    }
+    for (;;)
+    {
+        long row = rand.rand_n(board_size),
+             col = rand.rand_n(board_size);
+        if (board[row][col] == 0)
+        {
+            log("(%X,%X)".(row + 1, col + 1));
+            conn.write(new char[]{(char)0x34, (char)board_size, (char)row, (char)col});
+            return;
+        }
+    }
+}
+
+public void main()
+{
+    net.TcpListener listener = new net.TcpListener(":9999");
+    defer listener.close();
+
+    log("server start");
+    while (true)
+    {
+        work(listener.accept());
+    }
+}
