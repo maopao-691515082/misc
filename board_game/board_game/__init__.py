@@ -10,6 +10,8 @@ import kivy.graphics
 import kivy.clock
 
 class _Cell(kivy.uix.image.Image):
+    play_seq = 0
+
     def __init__(self, intf, row, col, **kwarg):
         kivy.uix.image.Image.__init__(self, **kwarg)
 
@@ -23,11 +25,27 @@ class _Cell(kivy.uix.image.Image):
 
         self.pos = 100 + row * intf.cell_size, 100 + col * intf.cell_size
 
-        self.set_stat(None)
+        self.set_stat(0)
+
+        p = kivy.uix.label.Label(text = "")
+        p.size = intf.cell_size, intf.cell_size
+        p.bold = True
+        p.font_size = intf.cell_size / 2
+        p.color = [0, 0, 0, 1]
+        p.pos = self.pos
+        self.play_seq_label = p
 
     def set_stat(self, stat):
         self.stat = stat
         self.source = self.intf.img_map[stat]
+        if stat == 1:
+            self.play_seq_label.color = [1, 1, 1, 1]
+        elif stat == 2:
+            self.play_seq_label.color = [0, 0, 0, 1]
+
+    def set_play_seq(self):
+        _Cell.play_seq += 1
+        self.play_seq_label.text = "%d" % _Cell.play_seq
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos) and touch.button == "left":
@@ -59,11 +77,12 @@ class _Intf(kivy.uix.widget.Widget):
                 cell = _Cell(self, row, col)
                 self.board[row][col] = cell
                 self.add_widget(cell)
+                self.add_widget(cell.play_seq_label)
 
         for i in xrange(self.board_size):
             x, y = 100 + i * self.cell_size, 100 - self.cell_size
-            for pos in (x, y), (y, x):
-                p = kivy.uix.label.Label(text = _fmt_pos_num(i))
+            for pos, is_row in ((x, y), True), ((y, x), False):
+                p = kivy.uix.label.Label(text = _fmt_pos_num(i, is_row))
                 p.size = self.cell_size, self.cell_size
                 p.bold = True
                 p.font_size = self.cell_size
@@ -87,8 +106,11 @@ class _Intf(kivy.uix.widget.Widget):
     def get_board(self):
         return [[cell.stat for cell in cell_row] for cell_row in self.board]
 
-    def set_cell_stat(self, row, col, stat):
-        self.board[row][col].set_stat(stat)
+    def set_cell_stat(self, row, col, stat, set_play_seq = False):
+        cell = self.board[row][col]
+        cell.set_stat(stat)
+        if set_play_seq:
+            cell.set_play_seq()
 
 class _App(kivy.app.App):
     def __init__(self, game, *args):
@@ -124,11 +146,14 @@ class Game:
     def get_board(self):
         return self.intf.get_board()
 
-    def set_cell_stat(self, row, col, stat):
-        self.intf.set_cell_stat(row, col, stat)
+    def set_cell_stat(self, row, col, stat, set_play_seq = False):
+        self.intf.set_cell_stat(row, col, stat, set_play_seq = set_play_seq)
 
-def _fmt_pos_num(n):
-    return string.letters[n]
+def _fmt_pos_num(n, is_row):
+    letters = string.letters[: 26]
+    if is_row:
+        letters = letters.upper()
+    return letters[n]
 
 def fmt_pos(row, col):
-    return "(%s,%s)" % (_fmt_pos_num(row), _fmt_pos_num(col))
+    return "(%s,%s)" % (_fmt_pos_num(row, True), _fmt_pos_num(col, False))

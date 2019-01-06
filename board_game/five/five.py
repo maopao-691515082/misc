@@ -1,6 +1,4 @@
-#qpy:kivy
-
-import sys, os, socket, struct
+import sys, os, socket, json
 import board_game
 
 BOARD_SIZE = 15
@@ -11,7 +9,7 @@ GAME_STAT_OVER  = "game over"
 
 class _Game:
     def __init__(self):
-        img_map = {stat: os.path.join("image", "%d.png" % (0 if stat is None else stat)) for stat in (None, 0, 1, 2)}
+        img_map = {stat: os.path.join("image", "%d.png" % stat) for stat in (0, 1, 2)}
         self.board_game = board_game.Game(BOARD_SIZE, img_map, self.init, self.on_touch_down)
         self.board_game.run()
 
@@ -24,7 +22,7 @@ class _Game:
     def set_cell_stat(self, row, col, stat):
         if stat != 0:
             print "%-10s%s" % ("human" if stat == 1 else "ai", board_game.fmt_pos(row, col))
-        self.board_game.set_cell_stat(row, col, stat)
+        self.board_game.set_cell_stat(row, col, stat, set_play_seq = stat != 0)
 
     def notify(self, text):
         self.board_game.notify(text)
@@ -54,17 +52,18 @@ class _Game:
         s = socket.socket()
         s.settimeout(10)
         s.connect(("localhost", 9999))
-        l = [0x12, BOARD_SIZE]
-        for stat_row in self.board_game.get_board():
-            for stat in stat_row:
-                l.append(stat)
-        s.sendall("".join([struct.pack("!B", i) for i in l]))
-        if ord(s.recv(1)) != 0x34:
-            raise Exception("invalid rsp hdr")
-        if ord(s.recv(1)) != BOARD_SIZE:
-            raise Exception("invalid board size")
-        row = ord(s.recv(1))
-        col = ord(s.recv(1))
+        msg = json.dumps(self.board_game.get_board())
+        print msg
+        s.sendall(msg)
+        s.shutdown(socket.SHUT_WR)
+        rsp = ""
+        while True:
+            data = s.recv(10000)
+            if data == "":
+                break
+            rsp += data
+        print rsp
+        row, col = json.loads(rsp)
         if row >= BOARD_SIZE or col >= BOARD_SIZE:
             raise Exception("invalid row or col")
         return row, col

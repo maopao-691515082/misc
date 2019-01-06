@@ -1,4 +1,12 @@
-import time, net, math/rand;
+import time, net, math/rand, util;
+
+!<<
+
+import (
+    "encoding/json"
+)
+
+!>>
 
 void log(String msg)
 {
@@ -11,41 +19,59 @@ void work(net.TcpConn conn)
 
     log("start calc");
 
-    var buf = new char[1];
-    if (conn.read(buf) != 1 || buf[0] != 0x12)
+    var req = new util.Vector<char>(nil);
+    for (;;)
     {
-        log("invalid req hdr");
-        return;
-    }
-    if (conn.read(buf) != 1 || buf[0] == 0)
-    {
-        log("invalid board");
-        return;
-    }
-    long board_size = (long)buf[0];
-    var board = new char[board_size][board_size];
-    foreach (var row: board.iter())
-    {
-        buf = row;
-        while (buf.size() > 0)
+        var buf = new char[10000];
+        long sz = conn.read(buf);
+        if (sz == 0)
         {
-            long sz = conn.read(buf);
-            if (sz == 0)
-            {
-                log("recv board error");
-                return;
-            }
-            buf = buf[sz :];
+            break;
+        }
+        req.extend(buf[: sz].iter());
+    }
+    var req_arr = req.to_array();
+
+    long board_size = 0;
+    !<<
+    var board [][]uint8
+    err := json.Unmarshal(l_req_arr.arr, &board)
+    if err == nil {
+        l_board_size = int64(len(board))
+    }
+    !>>
+
+    if (board_size <= 0)
+    {
+        log("invalid req");
+        return;
+    }
+
+    var board = new char[board_size][board_size];
+    for (long i = 0; i < board_size; ++ i)
+    {
+        var row = board[i];
+        bool ok = false;
+        !<<
+        if int64(copy(l_row.arr, board[l_i])) == l_board_size {
+            l_ok = true;
+        }
+        !>>
+        if (!ok)
+        {
+            log("invalid req");
+            return;
         }
     }
+
     for (;;)
     {
         long row = rand.rand_n(board_size),
              col = rand.rand_n(board_size);
         if (board[row][col] == 0)
         {
-            log("(%X,%X)".(row + 1, col + 1));
-            conn.write(new char[]{(char)0x34, (char)board_size, (char)row, (char)col});
+            log("(%c,%c)".("ABCDEFGHIJKLMNOPQRSTUVWXYZ".char_at(row), "abcdefghijklmnopqrstuvwxyz".char_at(col)));
+            conn.write("[%s, %s]".(row, col).to_char_array());
             return;
         }
     }
