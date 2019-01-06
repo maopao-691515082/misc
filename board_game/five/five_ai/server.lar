@@ -1,4 +1,4 @@
-import time, net, math/rand, util;
+import time, net, util;
 
 !<<
 
@@ -64,17 +64,11 @@ void work(net.TcpConn conn)
         }
     }
 
-    for (;;)
-    {
-        long row = rand.rand_n(board_size),
-             col = rand.rand_n(board_size);
-        if (board[row][col] == 0)
-        {
-            log("(%c,%c)".("ABCDEFGHIJKLMNOPQRSTUVWXYZ".char_at(row), "abcdefghijklmnopqrstuvwxyz".char_at(col)));
-            conn.write("[%s, %s]".(row, col).to_char_array());
-            return;
-        }
-    }
+    long row, col;
+    ai_choice(board, ref row, ref col);
+
+    log("(%c,%c)".("ABCDEFGHIJKLMNOPQRSTUVWXYZ".char_at(row), "abcdefghijklmnopqrstuvwxyz".char_at(col)));
+    conn.write("[%s, %s]".(row, col).to_char_array());
 }
 
 public void main()

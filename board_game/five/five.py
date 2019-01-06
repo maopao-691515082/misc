@@ -53,7 +53,6 @@ class _Game:
         s.settimeout(10)
         s.connect(("localhost", 9999))
         msg = json.dumps(self.board_game.get_board())
-        print msg
         s.sendall(msg)
         s.shutdown(socket.SHUT_WR)
         rsp = ""
@@ -62,7 +61,6 @@ class _Game:
             if data == "":
                 break
             rsp += data
-        print rsp
         row, col = json.loads(rsp)
         if row >= BOARD_SIZE or col >= BOARD_SIZE:
             raise Exception("invalid row or col")

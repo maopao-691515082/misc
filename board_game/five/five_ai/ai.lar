@@ -1,0 +1,15 @@
+import math/rand;
+
+void ai_choice(char[][] board, ref long row, ref long col)
+{
+    var board_size = board.size();
+    for (;;)
+    {
+        row = rand.rand_n(board_size);
+        col = rand.rand_n(board_size);
+        if (board[row][col] == 0)
+        {
+            return;
+        }
+    }
+}
