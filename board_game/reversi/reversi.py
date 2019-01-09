@@ -2,6 +2,8 @@ import sys, os, copy
 import board_game
 import reversi_ai
 
+AI_DEBUG = False
+
 BOARD_SIZE = 8
 
 GAME_STAT_HUMAN = "human thinking"
@@ -43,10 +45,12 @@ class _Game:
     def set_stat(self, stat):
         self.stat = stat
         self.notify(stat)
+        if AI_DEBUG and stat == GAME_STAT_HUMAN:
+            self.board_game.schedule_once(self._ai_choice_sched_cb)
 
     def on_touch_down(self, row, col):
         board = self.board_game.get_board()
-        if self.stat == GAME_STAT_HUMAN and board[row][col] == 0 and reversi_ai.try_set_cell(board, row, col, 1):
+        if not AI_DEBUG and self.stat == GAME_STAT_HUMAN and board[row][col] == 0 and reversi_ai.try_set_cell(board, row, col, 1):
             self.refresh_board(board, row, col)
             self.check_over()
             if self.stat != GAME_STAT_OVER:
@@ -55,17 +59,37 @@ class _Game:
                     self.board_game.schedule_once(self._ai_choice_sched_cb)
 
     def _ai_choice_sched_cb(self):
-        board = self.board_game.get_board()
-        row, col = reversi_ai.ai_choice(copy.deepcopy(board))
-        assert board[row][col] == 0 and reversi_ai.try_set_cell(board, row, col, 2)
-        self.refresh_board(board, row, col)
-        self.check_over()
-        if self.stat != GAME_STAT_OVER:
-            if self.can_go(1):
-                self.set_stat(GAME_STAT_HUMAN)
-            else:
-                assert self.can_go(2) and self.stat == GAME_STAT_AI
-                self.board_game.schedule_once(self._ai_choice_sched_cb)
+        if self.stat == GAME_STAT_HUMAN:
+            assert AI_DEBUG
+            board = self.board_game.get_board()
+            rev_board = copy.deepcopy(board)
+            for row in xrange(BOARD_SIZE):
+                for col in xrange(BOARD_SIZE):
+                    if rev_board[row][col] != 0:
+                        rev_board[row][col] = 3 - rev_board[row][col]
+            row, col = reversi_ai.ai_choice(rev_board)
+            assert board[row][col] == 0 and reversi_ai.try_set_cell(board, row, col, 1)
+            self.refresh_board(board, row, col)
+            self.check_over()
+            if self.stat != GAME_STAT_OVER:
+                if self.can_go(2):
+                    self.set_stat(GAME_STAT_AI)
+                    self.board_game.schedule_once(self._ai_choice_sched_cb)
+                else:
+                    assert self.can_go(1)
+                    self.set_stat(GAME_STAT_HUMAN)
+        else:
+            board = self.board_game.get_board()
+            row, col = reversi_ai.ai_choice(copy.deepcopy(board))
+            assert board[row][col] == 0 and reversi_ai.try_set_cell(board, row, col, 2)
+            self.refresh_board(board, row, col)
+            self.check_over()
+            if self.stat != GAME_STAT_OVER:
+                if self.can_go(1):
+                    self.set_stat(GAME_STAT_HUMAN)
+                else:
+                    assert self.can_go(2) and self.stat == GAME_STAT_AI
+                    self.board_game.schedule_once(self._ai_choice_sched_cb)
 
     def can_go(self, next_stat):
         board = self.board_game.get_board()

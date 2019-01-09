@@ -66,6 +66,6 @@ def _ai_choice(board, stat, deep, ab_score_result):
         score_result = 0
     return pos_result, score_result
 
-def ai_choice(board):
-    pos, _ = _ai_choice(board, 2, 4, None)
+def ai_choice(board, deep = 4):
+    pos, _ = _ai_choice(board, 2, deep, None)
     return pos

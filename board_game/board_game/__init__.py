@@ -140,8 +140,8 @@ class Game:
     def notify(self, text):
         self.intf.notify(text)
 
-    def schedule_once(self, cb):
-        kivy.clock.Clock.schedule_once(lambda dt: cb())
+    def schedule_once(self, cb, sec = 0):
+        kivy.clock.Clock.schedule_once(lambda dt: cb(), sec)
 
     def get_board(self):
         return self.intf.get_board()
