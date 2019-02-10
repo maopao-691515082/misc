@@ -13,9 +13,30 @@ void log(String msg)
     println("[%s] %s".(time.format_time("2006-01-02 15:04:05", time.time()), msg));
 }
 
+class InvalidReq
+{
+    EmptyException e usemethod;
+}
+
 void work(net.TcpConn conn)
 {
     defer conn.close();
+
+    var start_time = time.time();
+
+    defer
+    {
+        var c = catch<InvalidReq>();
+        if (c != nil)
+        {
+            log("invalid req");
+            log(c.traceback());
+        }
+        else
+        {
+            log("time cost: %.2f sec".(time.time() - start_time));
+        }
+    }
 
     log("start calc");
 
@@ -43,8 +64,7 @@ void work(net.TcpConn conn)
 
     if (board_size <= 0)
     {
-        log("invalid req");
-        return;
+        throw(new InvalidReq());
     }
 
     var board = new char[board_size][board_size];
@@ -59,22 +79,25 @@ void work(net.TcpConn conn)
         !>>
         if (!ok)
         {
-            log("invalid req");
-            return;
+            throw(new InvalidReq());
         }
     }
 
-    long row, col;
-    ai_choice(board, ref row, ref col);
+    var pos = ai_choice(board);
 
-    log("(%c,%c)".("ABCDEFGHIJKLMNOPQRSTUVWXYZ".char_at(row), "abcdefghijklmnopqrstuvwxyz".char_at(col)));
-    conn.write("[%s, %s]".(row, col).to_char_array());
+    log("%s".(pos));
+    conn.write("[%s, %s]".(pos.row, pos.col).to_char_array());
 }
 
 public void main()
 {
     net.TcpListener listener = new net.TcpListener(":9999");
     defer listener.close();
+
+    log("start");
+
+    init_ai_model();
+    log("ai model inited");
 
     log("server start");
     while (true)

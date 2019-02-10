@@ -1,0 +1,146 @@
+import util;
+
+//feature按每2bit表示一个位置状态，例如“oo x o”表示为0b101000010010
+final uint FEATURE_LEN = 6;
+
+uint feature_stat(uint f, uint i)
+{
+    assert(i < FEATURE_LEN, "bug");
+    return (f >> (i * 2)) & 0b11;
+}
+
+void set_feature_stat(ref uint f, uint i, uint stat)
+{
+    assert(feature_stat(f, i) == 0 && stat <= 2, "bug");
+    f |= stat << (i * 2);
+}
+
+bool std_feature(ref uint f)
+{
+    uint rf = 0;
+    for (uint i = 0; i < FEATURE_LEN; ++ i)
+    {
+        var stat = feature_stat(f, i);
+        if (stat == 3)
+        {
+            return false;
+        }
+        set_feature_stat(ref rf, FEATURE_LEN - 1 - i, stat);
+    }
+    f = util.min(f, rf);
+    return true;
+}
+
+String format_feature(uint f)
+{
+    String s = "Feature[";
+    for (uint i = 0; i < FEATURE_LEN; ++ i)
+    {
+        if (i != 0)
+        {
+            s = s.concat(",");
+        }
+        s = s.concat("%s".(feature_stat(f, i)));
+    }
+    return s.concat("]");
+}
+
+class FeatureInfo
+{
+    FeatureInfo(uint[] step_2_count)
+    {
+        assert(step_2_count.size() == 6, "bug");
+        this.step_2_count = step_2_count;
+        this.score_factor = 0.0;
+        double factor = 1.0;
+        for (int i = 0; i < 6; ++ i)
+        {
+            this.score_factor += factor * (double)this.step_2_count[i];
+            factor /= 8.0;
+        }
+    }
+
+    uint[] step_2_count;
+    double score_factor;
+}
+
+util.HashMap<uint, FeatureInfo> feature_info_map = new util.HashMap<uint, FeatureInfo>(nil);
+util.HashMap<uint, double> weight_map = new util.HashMap<uint, double>(nil);
+util.HashMap<uint, double> score_map = new util.HashMap<uint, double>(nil);
+
+FeatureInfo calc_feature_info(uint f)
+{
+    var it = feature_info_map.find(f);
+    if (it != nil)
+    {
+        return it.value();
+    }
+
+    var step_2_count = new uint[6];
+
+    //判断是否已经五联了
+    uint continue_count = 0;
+    for (uint i = 0; i < FEATURE_LEN; ++ i)
+    {
+        if (feature_stat(f, i) == 2)
+        {
+            ++ continue_count;
+            if (continue_count >= 5)
+            {
+                break;
+            }
+        }
+        else
+        {
+            continue_count = 0;
+        }
+    }
+    if (continue_count >= 5)
+    {
+        //存在五联，结束
+        step_2_count[0] = 1;
+    }
+    else
+    {
+        //不存在，对所有空位依次下子并进行dfs来计算step_2_count
+        for (uint i = 0; i < FEATURE_LEN; ++ i)
+        {
+            if (feature_stat(f, i) == 0)
+            {
+                uint new_f = f;
+                set_feature_stat(ref new_f, i, 2);
+                assert(std_feature(ref new_f), "bug");
+                var feature_info = calc_feature_info(new_f);
+                for (uint step = 1; step < 6; ++ step)
+                {
+                    step_2_count[step] += feature_info.step_2_count[step - 1];
+                }
+            }
+        }
+    }
+
+    var r = new FeatureInfo(step_2_count);
+    feature_info_map.set(f, r);
+    return r;
+}
+
+void init_ai_model()
+{
+    uint feature_count = 1U << (2 * FEATURE_LEN);
+    for (uint fi = 0; fi < feature_count; ++ fi)
+    {
+        uint f = fi;
+        if (std_feature(ref f))
+        {
+            calc_feature_info(f);
+        }
+    }
+    foreach (var kv: feature_info_map.iter())
+    {
+        weight_map.set(kv.first, 1);
+    }
+    foreach (var kv: feature_info_map.iter())
+    {
+        score_map.set(kv.first, kv.second.score_factor * weight_map.get(kv.first));
+    }
+}

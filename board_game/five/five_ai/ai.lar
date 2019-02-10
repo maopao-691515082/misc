@@ -1,15 +1,157 @@
-import math/rand;
+import math/rand, util;
 
-void ai_choice(char[][] board, ref long row, ref long col)
+class Pos
 {
-    var board_size = board.size();
-    for (;;)
+    Pos(long row, long col)
     {
-        row = rand.rand_n(board_size);
-        col = rand.rand_n(board_size);
-        if (board[row][col] == 0)
+        this.row = row;
+        this.col = col;
+    }
+
+    public String repr()
+    {
+        return "(%c,%c)".("ABCDEFGHIJKLMNOPQRSTUVWXYZ".char_at(this.row), "abcdefghijklmnopqrstuvwxyz".char_at(this.col));
+    }
+
+    long row, col;
+}
+
+class StatChange
+{
+    StatChange(char cell_stat, Pos pos)
+    {
+        this.cell_stat = cell_stat;
+        this.pos = pos;
+    }
+
+    char cell_stat;
+    Pos pos;
+}
+
+class Stat
+{
+    Stat(char[][] board)
+    {
+        this.board = board;
+        this.board_size = board.size();
+        this.pos_list = new util.Vector<Pos>(nil);
+        this.playable = new char[this.board_size][this.board_size];
+        this.change_list = new util.Vector<StatChange>(nil);
+        this.cell_count = 0;
+
+        for (long row = 0; row < this.board_size; ++ row)
         {
-            return;
+            for (long col = 0; col < this.board_size; ++ col)
+            {
+                this.pos_list.add(new Pos(row, col));
+                if (board[row][col] != 0)
+                {
+                    this.set_playable(row, col);
+                    ++ this.cell_count;
+                }
+            }
+        }
+        if (this.cell_count == this.board_size * this.board_size)
+        {
+            throw(new InvalidReq());
         }
     }
+
+    //(row,col)位置是有子的，这里是设置以其为中心的一片格子为playable
+    void set_playable(long row, long col)
+    {
+        this.adjust_playable(row, col, 1);
+    }
+
+    //set_playable的反操作，参考其注释
+    void unset_playable(long row, long col)
+    {
+        this.adjust_playable(row, col, -1);
+    }
+
+    void adjust_playable(long row, long col, int adj)
+    {
+        //五步以内只考虑3x3范围，之后考虑5x5
+        long range = 2;
+        if (this.cell_count < 5)
+        {
+            range = 1;
+        }
+        var x_min = util.max(0L, row - range),
+            x_max = util.min(this.board_size - 1, row + range),
+            y_min = util.max(0L, col - range),
+            y_max = util.min(this.board_size - 1, col + range);
+        for (long x = x_min; x <= x_max; ++ x)
+        {
+            for (long y = y_min; y <= y_max; ++ y)
+            {
+                var new_val = (int)this.playable[x][y] + adj;
+                assert(new_val >= 0, "bug");
+                this.playable[x][y] = (char)new_val;
+            }
+        }
+    }
+
+    util.Vector<Pos> playable_pos_list()
+    {
+        var l = new util.Vector<Pos>(nil);
+        foreach (var pos: this.pos_list.iter())
+        {
+            if (this.board[pos.row][pos.col] == 0 && this.playable[pos.row][pos.col] != 0)
+            {
+                l.add(pos);
+            }
+        }
+        if (l.size() == 0)
+        {
+            var center = this.board_size / 2;
+            if (this.board[center][center] == 0)
+            {
+                l.add(new Pos(center, center));
+            }
+        }
+        rand.shuffle(l);
+        return l;
+    }
+
+    Pos ai_choice(char cell_stat, int deep, ref long score)
+    {
+        if (deep <= 0)
+        {
+            score = this.calc_score();
+            return nil;
+        }
+
+        var ppl = this.playable_pos_list();
+        if (ppl.size() == 0)
+        {
+            score = this.calc_score();
+            return nil;
+        }
+
+        Pos pos = nil;
+        bool score_inited = false;
+        foreach (pos: ppl.iter())
+        {
+throw("todo");
+        }
+
+        assert(pos != nil && score_inited, "bug");
+        return pos;
+    }
+
+    char[][] board;
+    long board_size;
+    util.Vector<Pos> pos_list;
+    char[][] playable;
+    util.Vector<StatChange> change_list;
+    long cell_count;
+}
+
+Pos ai_choice(char[][] board)
+{
+    var stat = new Stat(board);
+    long score;
+    var pos = stat.ai_choice(2, 2, ref score);
+    return pos;
 }

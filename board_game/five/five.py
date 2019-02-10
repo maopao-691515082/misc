@@ -1,5 +1,7 @@
-import sys, os, socket, json
+import sys, os, socket, json, copy
 import board_game
+
+AI_DEBUG = False
 
 BOARD_SIZE = 15
 
@@ -30,10 +32,12 @@ class _Game:
     def set_stat(self, stat):
         self.stat = stat
         self.notify(stat)
+        if AI_DEBUG and stat == GAME_STAT_HUMAN:
+            self.board_game.schedule_once(self._ai_choice_sched_cb)
 
     def on_touch_down(self, row, col):
         board = self.board_game.get_board()
-        if self.stat == GAME_STAT_HUMAN and board[row][col] == 0:
+        if not AI_DEBUG and self.stat == GAME_STAT_HUMAN and board[row][col] == 0:
             self.set_cell_stat(row, col, 1)
             self.check_over()
             if self.stat != GAME_STAT_OVER:
@@ -41,18 +45,35 @@ class _Game:
                 self.board_game.schedule_once(self._ai_choice_sched_cb)
 
     def _ai_choice_sched_cb(self):
-        row, col = self.ai_choice()
-        assert self.board_game.get_board()[row][col] == 0
-        self.set_cell_stat(row, col, 2)
-        self.check_over()
-        if self.stat != GAME_STAT_OVER:
-            self.set_stat(GAME_STAT_HUMAN)
+        if self.stat == GAME_STAT_HUMAN:
+            assert AI_DEBUG
+            board = self.board_game.get_board()
+            rev_board = copy.deepcopy(board)
+            for row in xrange(BOARD_SIZE):
+                for col in xrange(BOARD_SIZE):
+                    if rev_board[row][col] != 0:
+                        rev_board[row][col] = 3 - rev_board[row][col]
+            row, col = self.ai_choice(rev_board)
+            assert board[row][col] == 0
+            self.set_cell_stat(row, col, 1)
+            self.check_over()
+            if self.stat != GAME_STAT_OVER:
+                self.set_stat(GAME_STAT_AI)
+                self.board_game.schedule_once(self._ai_choice_sched_cb)
+        else:
+            board = self.board_game.get_board()
+            row, col = self.ai_choice(board)
+            assert board[row][col] == 0
+            self.set_cell_stat(row, col, 2)
+            self.check_over()
+            if self.stat != GAME_STAT_OVER:
+                self.set_stat(GAME_STAT_HUMAN)
 
-    def ai_choice(self):
+    def ai_choice(self, board):
         s = socket.socket()
         s.settimeout(10)
         s.connect(("localhost", 9999))
-        msg = json.dumps(self.board_game.get_board())
+        msg = json.dumps(board)
         s.sendall(msg)
         s.shutdown(socket.SHUT_WR)
         rsp = ""
