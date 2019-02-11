@@ -62,7 +62,8 @@ void work(net.TcpConn conn)
     }
     !>>
 
-    if (board_size <= 0)
+    //特殊规定：棋盘至少要比ai的特征长度大，不然没法分析了
+    if (board_size <= (long)FEATURE_LEN)
     {
         throw(new InvalidReq());
     }

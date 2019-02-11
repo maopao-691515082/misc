@@ -1,5 +1,7 @@
 import math/rand, util;
 
+final int AI_DEEP = 2;
+
 class Pos
 {
     Pos(long row, long col)
@@ -16,18 +18,6 @@ class Pos
     long row, col;
 }
 
-class StatChange
-{
-    StatChange(char cell_stat, Pos pos)
-    {
-        this.cell_stat = cell_stat;
-        this.pos = pos;
-    }
-
-    char cell_stat;
-    Pos pos;
-}
-
 class Stat
 {
     Stat(char[][] board)
@@ -36,7 +26,6 @@ class Stat
         this.board_size = board.size();
         this.pos_list = new util.Vector<Pos>(nil);
         this.playable = new char[this.board_size][this.board_size];
-        this.change_list = new util.Vector<StatChange>(nil);
         this.cell_count = 0;
 
         for (long row = 0; row < this.board_size; ++ row)
@@ -54,6 +43,79 @@ class Stat
         if (this.cell_count == this.board_size * this.board_size)
         {
             throw(new InvalidReq());
+        }
+
+        this.feature_map = new util.HashMap<uint, long>(nil);
+        //统一初始化所有feature和对应rev_feature的count，省的之后的判断了
+        foreach (var kv: feature_info_map.iter())
+        {
+            this.feature_map.set(kv.first, 0);
+            this.feature_map.set(rev_feature(kv.first), 0);
+        }
+        for (long row = 0; row < this.board_size; ++ row)
+        {
+            for (long col = 0; col < this.board_size; ++ col)
+            {
+                //横向
+                if (col + (long)FEATURE_LEN <= this.board_size)
+                {
+                    this.inc_feature(this.board[row][col : col + (long)FEATURE_LEN]);
+                }
+
+                //纵向
+                if (row + (long)FEATURE_LEN <= this.board_size)
+                {
+                    var line = new char[FEATURE_LEN];
+                    for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                    {
+                        line[i] = this.board[row + i][col];
+                    }
+                    this.inc_feature(line);
+                }
+
+                //右下方
+                if (row + (long)FEATURE_LEN <= this.board_size && col + (long)FEATURE_LEN <= this.board_size)
+                {
+                    var line = new char[FEATURE_LEN];
+                    for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                    {
+                        line[i] = this.board[row + i][col + i];
+                    }
+                    this.inc_feature(line);
+                }
+
+                //左下方
+                if (row + (long)FEATURE_LEN <= this.board_size && col - ((long)FEATURE_LEN - 1) >= 0)
+                {
+                    var line = new char[FEATURE_LEN];
+                    for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                    {
+                        line[i] = this.board[row + i][col - i];
+                    }
+                    this.inc_feature(line);
+                }
+            }
+        }
+    }
+
+    void inc_feature(char[] line)
+    {
+        this.adjust_feature_count(line, 1);
+    }
+
+    void dec_feature(char[] line)
+    {
+        this.adjust_feature_count(line, -1L);
+    }
+
+    void adjust_feature_count(char[] line, long adj)
+    {
+        var f = line_to_feature(line);
+        if (feature_score(f) != 0.0)
+        {
+            var count = this.feature_map.get(f) + adj;
+            assert(count >= 0, "bug");
+            this.feature_map.set(f, count);
         }
     }
 
@@ -114,44 +176,203 @@ class Stat
         return l;
     }
 
-    Pos ai_choice(char cell_stat, int deep, ref long score)
+    Pos ai_choice(char cell_stat, int deep, ref double score_result, double ab_score_result, bool ab_score_result_inited)
     {
         if (deep <= 0)
         {
-            score = this.calc_score();
+            score_result = this.calc_score();
             return nil;
         }
 
         var ppl = this.playable_pos_list();
         if (ppl.size() == 0)
         {
-            score = this.calc_score();
+            score_result = this.calc_score();
             return nil;
         }
 
-        Pos pos = nil;
-        bool score_inited = false;
-        foreach (pos: ppl.iter())
+        Pos pos_result = nil;
+        bool score_result_inited = false;
+        foreach (var pos: ppl.iter())
         {
-throw("todo");
+            this.set_cell(cell_stat, pos);
+            double score;
+            this.ai_choice(3 - cell_stat, deep - 1, ref score, score_result, score_result_inited);
+            this.unset_cell(cell_stat, pos);
+
+            if (cell_stat == 2)
+            {
+                if (!score_result_inited || score > score_result)
+                {
+                    pos_result = pos;
+                    score_result = score;
+                    score_result_inited = true;
+                }
+                if (ab_score_result_inited && score_result > ab_score_result)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                assert(cell_stat == 1, "bug");
+                if (!score_result_inited || score < score_result)
+                {
+                    pos_result = pos;
+                    score_result = score;
+                    score_result_inited = true;
+                }
+                if (ab_score_result_inited && score_result < ab_score_result)
+                {
+                    break;
+                }
+            }
         }
 
-        assert(pos != nil && score_inited, "bug");
-        return pos;
+        assert(pos_result != nil && score_result_inited, "bug");
+        return pos_result;
+    }
+
+    double calc_score()
+    {
+        double score = 0.0;
+        foreach (var kv: this.feature_map.iter())
+        {
+            score += feature_score(kv.first) * (double)kv.second;
+        }
+        return score;
+    }
+
+    //模拟下子，修改状态
+    void set_cell(char cell_stat, Pos pos)
+    {
+        assert(this.board[pos.row][pos.col] == 0 && (cell_stat == 1 || cell_stat == 2), "bug");
+
+        this.remove_feature_with_pos(pos);
+
+        this.board[pos.row][pos.col] = cell_stat;
+        ++ this.cell_count;
+        this.set_playable(pos.row, pos.col);
+
+        this.add_feature_with_pos(pos);
+    }
+
+    //set_cell的反操作，回退之前的下子和状态变动
+    void unset_cell(char cell_stat, Pos pos)
+    {
+        assert((cell_stat == 1 || cell_stat == 2) && this.board[pos.row][pos.col] == cell_stat, "bug");
+
+        this.remove_feature_with_pos(pos);
+
+        this.unset_playable(pos.row, pos.col);
+        -- this.cell_count;
+        this.board[pos.row][pos.col] = 0;
+
+        this.add_feature_with_pos(pos);
+    }
+
+    void add_feature_with_pos(Pos pos)
+    {
+        this.adjust_feature_count_with_pos(pos, false);
+    }
+
+    void remove_feature_with_pos(Pos pos)
+    {
+        this.adjust_feature_count_with_pos(pos, true);
+    }
+
+    void adjust_feature_count_with_pos(Pos pos, bool is_dec)
+    {
+        /*
+        var adj_func = []{
+            void call(char[] line)
+            {
+                if (is_dec)
+                {
+                    this.dec_feature(line);
+                }
+                else
+                {
+                    this.inc_feature(line);
+                }
+            }
+        };
+        */
+        long adj_count = 1;
+        if (is_dec)
+        {
+            adj_count = -1L;
+        }
+
+        var line = new char[FEATURE_LEN];
+
+        //横向
+        for (long col = pos.col - ((long)FEATURE_LEN - 1); col <= pos.col; ++ col)
+        {
+            if (col >= 0 && col + (long)FEATURE_LEN <= this.board_size)
+            {
+                //adj_func.call(this.board[pos.row][col : col + (long)FEATURE_LEN]);
+                this.adjust_feature_count(this.board[pos.row][col : col + (long)FEATURE_LEN], adj_count);
+            }
+        }
+
+        //纵向
+        for (long row = pos.row - ((long)FEATURE_LEN - 1); row <= pos.row; ++ row)
+        {
+            if (row >= 0 && row + (long)FEATURE_LEN <= this.board_size)
+            {
+                for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                {
+                    line[i] = this.board[row + i][pos.col];
+                }
+                //adj_func.call(line);
+                this.adjust_feature_count(line, adj_count);
+            }
+        }
+
+        //左上到右下
+        for (long row = pos.row - ((long)FEATURE_LEN - 1), col = pos.col - ((long)FEATURE_LEN - 1); row <= pos.row && col <= pos.col;
+             ++ row, ++ col)
+        {
+            if (row >= 0 && row + (long)FEATURE_LEN <= this.board_size && col >= 0 && col + (long)FEATURE_LEN <= this.board_size)
+            {
+                for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                {
+                    line[i] = this.board[row + i][col + i];
+                }
+                //adj_func.call(line);
+                this.adjust_feature_count(line, adj_count);
+            }
+        }
+
+        //右上到左下
+        for (long row = pos.row - ((long)FEATURE_LEN - 1), col = pos.col + ((long)FEATURE_LEN - 1); row <= pos.row && col >= pos.col;
+             ++ row, -- col)
+        {
+            if (row >= 0 && row + (long)FEATURE_LEN <= this.board_size && col - ((long)FEATURE_LEN - 1) >= 0 && col < this.board_size)
+            {
+                for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                {
+                    line[i] = this.board[row + i][col - i];
+                }
+                //adj_func.call(line);
+                this.adjust_feature_count(line, adj_count);
+            }
+        }
     }
 
     char[][] board;
     long board_size;
     util.Vector<Pos> pos_list;
     char[][] playable;
-    util.Vector<StatChange> change_list;
     long cell_count;
+    util.HashMap<uint, long> feature_map; //{feature:count}
 }
 
 Pos ai_choice(char[][] board)
 {
     var stat = new Stat(board);
-    long score;
-    var pos = stat.ai_choice(2, 2, ref score);
+    double score;
+    var pos = stat.ai_choice(2, AI_DEEP, ref score, 0.0, false);
     return pos;
 }

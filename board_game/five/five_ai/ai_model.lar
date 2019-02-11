@@ -31,6 +31,26 @@ bool std_feature(ref uint f)
     return true;
 }
 
+//反转feature的双方棋子
+uint rev_feature(uint f)
+{
+    uint rev_f = 0;
+    for (uint i = 0; i < FEATURE_LEN; ++ i)
+    {
+        var stat = feature_stat(f, i);
+        if (stat == 1 || stat == 2)
+        {
+            set_feature_stat(ref rev_f, i, 3 - stat);
+        }
+        else
+        {
+            assert(stat == 0, "bug");
+        }
+    }
+    assert(std_feature(ref rev_f), "bug");
+    return rev_f;
+}
+
 String format_feature(uint f)
 {
     String s = "Feature[";
@@ -64,9 +84,9 @@ class FeatureInfo
     double score_factor;
 }
 
-util.HashMap<uint, FeatureInfo> feature_info_map = new util.HashMap<uint, FeatureInfo>(nil);
-util.HashMap<uint, double> weight_map = new util.HashMap<uint, double>(nil);
-util.HashMap<uint, double> score_map = new util.HashMap<uint, double>(nil);
+util.HashMap<uint, FeatureInfo> feature_info_map;
+util.HashMap<uint, double> weight_map;
+util.HashMap<uint, double> score_map;
 
 FeatureInfo calc_feature_info(uint f)
 {
@@ -126,6 +146,12 @@ FeatureInfo calc_feature_info(uint f)
 
 void init_ai_model()
 {
+    assert(FEATURE_LEN > 5, "bug"); //限制一下特征长度，需要比5大
+
+    feature_info_map = new util.HashMap<uint, FeatureInfo>(nil);
+    weight_map = new util.HashMap<uint, double>(nil);
+    score_map = new util.HashMap<uint, double>(nil);
+
     uint feature_count = 1U << (2 * FEATURE_LEN);
     for (uint fi = 0; fi < feature_count; ++ fi)
     {
@@ -135,6 +161,18 @@ void init_ai_model()
             calc_feature_info(f);
         }
     }
+    var zero_score_factor_feature_list = new util.Vector<uint>(nil);
+    foreach (var kv: feature_info_map.iter())
+    {
+        if (kv.second.score_factor == 0.0)
+        {
+            zero_score_factor_feature_list.add(kv.first);
+        }
+    }
+    foreach (var f: zero_score_factor_feature_list.iter())
+    {
+        feature_info_map.pop(f);
+    }
     foreach (var kv: feature_info_map.iter())
     {
         weight_map.set(kv.first, 1);
@@ -143,4 +181,33 @@ void init_ai_model()
     {
         score_map.set(kv.first, kv.second.score_factor * weight_map.get(kv.first));
     }
+}
+
+double feature_score(uint f)
+{
+    //分别计算我方和对方的分值，返回分值差
+    double my_score = 0.0, opp_score = 0.0;
+    var it = score_map.find(f);
+    if (it != nil)
+    {
+        my_score = it.value();
+    }
+    it = score_map.find(rev_feature(f));
+    if (it != nil)
+    {
+        opp_score = it.value();
+    }
+    return my_score - opp_score;
+}
+
+uint line_to_feature(char[] line)
+{
+    assert(line.size() == (long)FEATURE_LEN, "bug");
+    uint f = 0;
+    for (uint i = 0; i < FEATURE_LEN; ++ i)
+    {
+        set_feature_stat(ref f, i, (uint)line[i]);
+    }
+    assert(std_feature(ref f), "bug");
+    return f;
 }

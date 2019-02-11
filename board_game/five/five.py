@@ -1,7 +1,7 @@
 import sys, os, socket, json, copy
 import board_game
 
-AI_DEBUG = False
+AI_DEBUG = True
 
 BOARD_SIZE = 15
 
@@ -104,8 +104,8 @@ class _Game:
             s = set([stat for stat in line])
             if len(s) == 1:
                 return list(s)[0]
-        for row in xrange(BOARD_SIZE - 5):
-            for col in xrange(BOARD_SIZE - 5):
+        for row in xrange(BOARD_SIZE - 4):
+            for col in xrange(BOARD_SIZE - 4):
                 for line in (board[row][col : col + 5], [board[row + i][col] for i in xrange(5)], [board[row + i][col + i] for i in xrange(5)]):
                     winner = get_winner(line)
                     if winner == 1 or winner == 2:
