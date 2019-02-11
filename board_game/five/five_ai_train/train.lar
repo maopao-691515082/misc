@@ -1,0 +1,197 @@
+import util, math/rand, math;
+import five_ai;
+
+final int PLAYER_COUNT = 10;
+final int SET_COUNT = 2;
+final long BOARD_SIZE = 15;
+final long CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
+
+util.Vector<uint> feature_list;
+
+class Player
+{
+    Player(int idx)
+    {
+        this.idx = idx;
+        this.weight_map = new util.HashMap<uint, double>(nil);
+        foreach (var f: feature_list.iter())
+        {
+            this.weight_map.set(f, math.exp(rand.random()));
+        }
+        this.score = 0;
+    }
+
+    int idx;
+    util.HashMap<uint, double> weight_map;
+    int score;
+}
+
+Player[] player_list;
+
+bool check_winner(char[] line, char win_stat, Player p)
+{
+    var stat = line[0];
+    for (int i = 1; i < 5; ++ i)
+    {
+        if (stat != line[i])
+        {
+            return false;
+        }
+    }
+    if (stat == 0)
+    {
+        return false;
+    }
+    assert(stat == win_stat, "bug");
+    p.score += 2;
+    println("#%s win".(p.idx));
+    return true;
+}
+
+bool check_over(char[][] board, Player p, char win_stat)
+{
+    var line = new char[5];
+
+    for (long row = 0; row < BOARD_SIZE; ++ row)
+    {
+        for (long col = 0; col < BOARD_SIZE; ++ col)
+        {
+            if (col + 5 <= BOARD_SIZE)
+            {
+                for (long i = 0; i < 5; ++ i)
+                {
+                    line[i] = board[row][col + i];
+                }
+                if (check_winner(line, win_stat, p))
+                {
+                    return true;
+                }
+            }
+
+            if (row + 5 <= BOARD_SIZE)
+            {
+                for (long i = 0; i < 5; ++ i)
+                {
+                    line[i] = board[row + i][col];
+                }
+                if (check_winner(line, win_stat, p))
+                {
+                    return true;
+                }
+            }
+
+            if (row + 5 <= BOARD_SIZE && col + 5 <= BOARD_SIZE)
+            {
+                for (long i = 0; i < 5; ++ i)
+                {
+                    line[i] = board[row + i][col + i];
+                }
+                if (check_winner(line, win_stat, p))
+                {
+                    return true;
+                }
+            }
+
+            if (row + 5 <= BOARD_SIZE && col >= 4)
+            {
+                for (long i = 0; i < 5; ++ i)
+                {
+                    line[i] = board[row + i][col - i];
+                }
+                if (check_winner(line, win_stat, p))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+void pk_one_set(Player x, Player y)
+{
+    var board = new char[BOARD_SIZE][BOARD_SIZE];
+    long cell_count = 0;
+    while (true)
+    {
+        long row, col;
+
+        //x执黑
+        five_ai.train_ai_choice(board, 1, ref row, ref col);
+        assert(board[row][col] == 0, "bug");
+        board[row][col] = 1;
+        ++ cell_count;
+        assert(cell_count <= CELL_COUNT, "bug");
+        if (cell_count == CELL_COUNT)
+        {
+            ++ x.score;
+            ++ y.score;
+            println("draw");
+            break;
+        }
+        if (check_over(board, x, 1))
+        {
+            break;
+        }
+
+        //y执白
+        five_ai.train_ai_choice(board, 2, ref row, ref col);
+        assert(board[row][col] == 0, "bug");
+        board[row][col] = 2;
+        ++ cell_count;
+        assert(cell_count <= CELL_COUNT, "bug");
+        if (cell_count == CELL_COUNT)
+        {
+            ++ x.score;
+            ++ y.score;
+            println("draw");
+            break;
+        }
+        if (check_over(board, y, 2))
+        {
+            break;
+        }
+    }
+}
+
+void pk(Player a, Player b)
+{
+    //双方各自执黑进行SET_COUNT次对局
+
+    five_ai.train_init_player(a.weight_map, b.weight_map);
+    for (int i = 0; i < SET_COUNT; ++ i)
+    {
+        pk_one_set(a, b);
+    }
+
+    five_ai.train_init_player(b.weight_map, a.weight_map);
+    for (int i = 0; i < SET_COUNT; ++ i)
+    {
+        pk_one_set(b, a);
+    }
+}
+
+public void main()
+{
+    five_ai.init_ai_model();
+    feature_list = five_ai.train_get_feature_list();
+
+    player_list = new Player[PLAYER_COUNT];
+    for (int i = 0; i < PLAYER_COUNT; ++ i)
+    {
+        player_list[i] = new Player(i);
+    }
+    for (int i = 0; i < PLAYER_COUNT; ++ i)
+    {
+        for (int j = i + 1; j < PLAYER_COUNT; ++ j)
+        {
+            println("#%s vs #%s".(i, j));
+            pk(player_list[i], player_list[j]);
+        }
+    }
+    foreach (var p: player_list.iter())
+    {
+        println("%s %s %s".(p.idx, p.weight_map, p.score));
+    }
+}

@@ -1,0 +1,60 @@
+import util, math/rand;
+
+util.HashMap<uint, double> score_map_1, score_map_2;
+
+public util.Vector<uint> train_get_feature_list()
+{
+    var fl = new util.Vector<uint>(nil);
+    foreach (var kv: feature_info_map.iter())
+    {
+        fl.add(kv.first);
+    }
+    return fl;
+}
+
+public void train_init_player(util.HashMap<uint, double> weight_map_1, util.HashMap<uint, double> weight_map_2)
+{
+    score_map_1 = new util.HashMap<uint, double>(nil);
+    foreach (var kv: feature_info_map.iter())
+    {
+        score_map_1.set(kv.first, kv.second.score_factor * weight_map_1.get(kv.first));
+    }
+    score_map_2 = new util.HashMap<uint, double>(nil);
+    foreach (var kv: feature_info_map.iter())
+    {
+        score_map_2.set(kv.first, kv.second.score_factor * weight_map_2.get(kv.first));
+    }
+}
+
+public void train_ai_choice(char[][] board, char curr_stat, ref long row, ref long col)
+{
+    //拷贝一份board，若curr_stat为1则翻转所有棋子的颜色
+    long board_size = board.size();
+    var board_copy = new char[board_size][board_size];
+    for (long r = 0; r < board_size; ++ r)
+    {
+        for (long c = 0; c < board_size; ++ c)
+        {
+            var stat = board[r][c];
+            if (curr_stat == 1 && stat != 0)
+            {
+                stat = 3 - stat;
+            }
+            board_copy[r][c] = stat;
+        }
+    }
+
+    //设置ai模型的参数为当前选手
+    if (curr_stat == 1)
+    {
+        score_map = score_map_1;
+    }
+    else
+    {
+        score_map = score_map_2;
+    }
+
+    var pos = ai_choice(board_copy);
+    row = pos.row;
+    col = pos.col;
+}

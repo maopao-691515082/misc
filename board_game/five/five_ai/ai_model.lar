@@ -144,7 +144,7 @@ FeatureInfo calc_feature_info(uint f)
     return r;
 }
 
-void init_ai_model()
+public void init_ai_model()
 {
     assert(FEATURE_LEN > 5, "bug"); //限制一下特征长度，需要比5大
 

@@ -369,8 +369,24 @@ class Stat
     util.HashMap<uint, long> feature_map; //{feature:count}
 }
 
+final bool FOOLISH = false;
+
 Pos ai_choice(char[][] board)
 {
+    if (FOOLISH)
+    {
+        for (long row = 0; row < board.size(); ++ row)
+        {
+            for (long col = 0; col < board.size(); ++ col)
+            {
+                if (board[row][col] == 0)
+                {
+                    return new Pos(row, col);
+                }
+            }
+        }
+        throw("full");
+    }
     var stat = new Stat(board);
     double score;
     var pos = stat.ai_choice(2, AI_DEEP, ref score, 0.0, false);
