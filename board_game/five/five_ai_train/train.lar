@@ -1,4 +1,4 @@
-import util, math/rand, math;
+import util, math/rand, math, io/bufio, time, os;
 import five_ai;
 
 final int PLAYER_COUNT = 10;
@@ -172,26 +172,166 @@ void pk(Player a, Player b)
     }
 }
 
+void output_result()
+{
+    var out_file = new bufio.File("result_%s.%s".((long)(time.time() * 1000000.0), os.pid()), "w");
+    defer out_file.close();
+
+    foreach (var p: player_list.iter())
+    {
+        out_file.write_line("#%s: %s".(p.idx, p.score));
+        foreach (var kv: p.weight_map.iter())
+        {
+            out_file.write_line("%s\t%s".(kv.first, kv.second));
+        }
+        out_file.write_line("");
+    }
+}
+
+void match()
+{
+    for (int i = 0; i < PLAYER_COUNT; ++ i)
+    {
+        var pi = player_list[i];
+        for (int j = i + 1; j < PLAYER_COUNT; ++ j)
+        {
+            var pj = player_list[j];
+            println("#%s[%s] vs #%s[%s]".(pi.idx, i, pj.idx, j));
+            pk(pi, pj);
+        }
+    }
+
+    output_result();
+}
+
+void random_train()
+{
+    while (true)
+    {
+        player_list = new Player[PLAYER_COUNT];
+        for (int i = 0; i < PLAYER_COUNT; ++ i)
+        {
+            player_list[i] = new Player(i);
+        }
+
+        match();
+    }
+}
+
+void load_best_ai()
+{
+    var best_ai_file = new bufio.File("best_ai", "r");
+    defer best_ai_file.close();
+
+    for (int i = 0; i < PLAYER_COUNT; ++ i)
+    {
+        var p = new Player(i);
+        if (best_ai_file.read_line() != nil)
+        {
+            for (long j = 0; j < feature_list.size(); ++ j)
+            {
+                var sl = best_ai_file.read_line().split(nil, -1L);
+                assert(sl.size() == 2, "bug");
+                var f = (uint)sl[0].parse_long(0);
+                var sv = sl[1].parse_double();
+                p.weight_map.set(f, sv);
+            }
+            var empty_line = best_ai_file.read_line();
+            assert(empty_line.eq("\n"), "bug");
+        }
+        player_list[i] = p;
+    }
+}
+
+Player mutate(Player p, int idx)
+{
+    //变异过程，从原player生成新的，随机改变其中10%的weight（实现上是生成新player并随机继承90%的weight）
+    var new_p = new Player(idx);
+    rand.shuffle(feature_list);
+    for (long i = 0; i < feature_list.size() * 9 / 10; ++ i)
+    {
+        uint f = feature_list.get(i);
+        new_p.weight_map.set(f, p.weight_map.get(f));
+    }
+    return new_p;
+}
+
+Player breed(Player a, Player b, int idx)
+{
+    //繁殖过程，从a和b随机取一半weight给新player
+    var new_p = new Player(idx);
+    rand.shuffle(feature_list);
+    for (long i = 0; i < feature_list.size(); ++ i)
+    {
+        var src = a;
+        if (i % 2 == 0)
+        {
+            src = b;
+        }
+        uint f = feature_list.get(i);
+        new_p.weight_map.set(f, src.weight_map.get(f));
+    }
+    return new_p;
+}
+
+void gene_train()
+{
+    player_list = new Player[PLAYER_COUNT];
+
+    load_best_ai();
+    int next_idx = PLAYER_COUNT;
+
+    while (true)
+    {
+        match();
+
+        //按score从大到小取出前一半player进入下一轮
+        var new_player_list = new Player[PLAYER_COUNT];
+        for (int i = 0; i < PLAYER_COUNT / 2; ++ i)
+        {
+            int best_player_idx = i;
+            for (int j = i + 1; j < PLAYER_COUNT; ++ j)
+            {
+                if (player_list[j].score > player_list[best_player_idx].score)
+                {
+                    best_player_idx = j;
+                }
+            }
+            var tmp = player_list[i];
+            player_list[i] = player_list[best_player_idx];
+            player_list[best_player_idx] = tmp;
+
+            //进入下一轮并清空积分
+            new_player_list[i] = player_list[i];
+            new_player_list[i].score = 0;
+        }
+
+        //通过遗传杂交或变异生成剩余一半player
+        for (int i = PLAYER_COUNT / 2; i < PLAYER_COUNT; ++ i)
+        {
+            var a = player_list[rand.rand_n((long)PLAYER_COUNT / 2)],
+                b = player_list[rand.rand_n((long)PLAYER_COUNT / 2)];
+            if (a == b)
+            {
+                new_player_list[i] = mutate(a, next_idx);
+            }
+            else
+            {
+                new_player_list[i] = breed(a, b, next_idx);
+            }
+            ++ next_idx;
+        }
+
+        //开始下一轮比赛
+        player_list = new_player_list;
+    }
+}
+
 public void main()
 {
     five_ai.init_ai_model();
     feature_list = five_ai.train_get_feature_list();
 
-    player_list = new Player[PLAYER_COUNT];
-    for (int i = 0; i < PLAYER_COUNT; ++ i)
-    {
-        player_list[i] = new Player(i);
-    }
-    for (int i = 0; i < PLAYER_COUNT; ++ i)
-    {
-        for (int j = i + 1; j < PLAYER_COUNT; ++ j)
-        {
-            println("#%s vs #%s".(i, j));
-            pk(player_list[i], player_list[j]);
-        }
-    }
-    foreach (var p: player_list.iter())
-    {
-        println("%s %s %s".(p.idx, p.weight_map, p.score));
-    }
+    //random_train();
+    gene_train();
 }

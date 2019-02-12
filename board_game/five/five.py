@@ -19,6 +19,10 @@ class _Game:
         for row in xrange(BOARD_SIZE):
             for col in xrange(BOARD_SIZE):
                 self.set_cell_stat(row, col, 0)
+        '''
+        for i, stat in enumerate([2, 2, 0, 1, 0, 2]):
+            self.board_game.set_cell_stat(i, 1, stat)
+        '''
         self.set_stat(GAME_STAT_HUMAN)
 
     def set_cell_stat(self, row, col, stat):
