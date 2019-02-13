@@ -35,13 +35,17 @@ class _Cell(kivy.uix.image.Image):
         p.pos = self.pos
         self.play_seq_label = p
 
+    def clear_last_stat_change_color(self):
+        if self.stat == 1:
+            self.play_seq_label.color = [1, 1, 1, 1]
+        elif self.stat == 2:
+            self.play_seq_label.color = [0, 0, 0, 1]
+
     def set_stat(self, stat):
         self.stat = stat
         self.source = self.intf.img_map[stat]
-        if stat == 1:
-            self.play_seq_label.color = [1, 1, 1, 1]
-        elif stat == 2:
-            self.play_seq_label.color = [0, 0, 0, 1]
+        if self.stat != 0:
+            self.play_seq_label.color = [1, 0, 0, 1]
 
     def set_play_seq(self):
         _Cell.play_seq += 1
@@ -107,6 +111,9 @@ class _Intf(kivy.uix.widget.Widget):
         return [[cell.stat for cell in cell_row] for cell_row in self.board]
 
     def set_cell_stat(self, row, col, stat, set_play_seq = False):
+        for cell_row in self.board:
+            for cell in cell_row:
+                cell.clear_last_stat_change_color()
         cell = self.board[row][col]
         cell.set_stat(stat)
         if set_play_seq:

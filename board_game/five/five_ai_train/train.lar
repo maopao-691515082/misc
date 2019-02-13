@@ -218,9 +218,9 @@ void random_train()
     }
 }
 
-void load_best_ai()
+void load_best_ai(String fn)
 {
-    var best_ai_file = new bufio.File("best_ai", "r");
+    var best_ai_file = new bufio.File(fn, "r");
     defer best_ai_file.close();
 
     for (int i = 0; i < PLAYER_COUNT; ++ i)
@@ -278,7 +278,7 @@ void gene_train()
 {
     player_list = new Player[PLAYER_COUNT];
 
-    load_best_ai();
+    load_best_ai("random_train_best_ai");
     int next_idx = PLAYER_COUNT;
 
     while (true)
@@ -327,11 +327,21 @@ void gene_train()
     }
 }
 
+void last_train()
+{
+    player_list = new Player[PLAYER_COUNT];
+
+    load_best_ai("gene_train_best_ai");
+
+    match();
+}
+
 public void main()
 {
     five_ai.init_ai_model();
     feature_list = five_ai.train_get_feature_list();
 
     //random_train();
-    gene_train();
+    //gene_train();
+    last_train();
 }
