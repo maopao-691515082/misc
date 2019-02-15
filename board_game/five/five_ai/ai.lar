@@ -1,4 +1,4 @@
-import math/rand, util;
+import math/rand, util, time;
 
 final int AI_DEEP = 2;
 
@@ -45,13 +45,7 @@ class Stat
             throw(new InvalidReq());
         }
 
-        this.feature_map = new util.HashMap<uint, long>(nil);
-        //统一初始化所有feature和对应rev_feature的count，省的之后的判断了
-        foreach (var kv: feature_info_map.iter())
-        {
-            this.feature_map.set(kv.first, 0);
-            this.feature_map.set(rev_feature(kv.first), 0);
-        }
+        this.feature_map = new long[1 << (FEATURE_LEN * 2)];
         for (long row = 0; row < this.board_size; ++ row)
         {
             for (long col = 0; col < this.board_size; ++ col)
@@ -113,9 +107,9 @@ class Stat
         var f = line_to_feature(line);
         if (feature_score(f) != 0.0)
         {
-            var count = this.feature_map.get(f) + adj;
+            var count = this.feature_map[f] + adj;
             assert(count >= 0, "bug");
-            this.feature_map.set(f, count);
+            this.feature_map[f] = count;
         }
     }
 
@@ -235,11 +229,17 @@ class Stat
 
     double calc_score()
     {
+double ts = time.time();
         double score = 0.0;
-        foreach (var kv: this.feature_map.iter())
+        for (long i = 0; i < this.feature_map.size(); ++ i)
         {
-            score += feature_score(kv.first) * (double)kv.second;
+            if (this.feature_map[i] == 0)
+            {
+                continue;
+            }
+            score += feature_score((uint)i) * (double)this.feature_map[i];
         }
+this.step_tm += time.time() - ts;
         return score;
     }
 
@@ -366,7 +366,9 @@ class Stat
     util.Vector<Pos> pos_list;
     char[][] playable;
     long cell_count;
-    util.HashMap<uint, long> feature_map; //{feature:count}
+    long[] feature_map; //{feature:count}
+
+    double step_tm;
 }
 
 final bool FOOLISH = false;
@@ -390,5 +392,6 @@ Pos ai_choice(char[][] board)
     var stat = new Stat(board);
     double score;
     var pos = stat.ai_choice(2, AI_DEEP, ref score, 0.0, false);
+    println("ppl time: %.2f sec".(stat.step_tm));
     return pos;
 }
