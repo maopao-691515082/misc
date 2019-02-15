@@ -204,17 +204,58 @@ void match()
     output_result();
 }
 
+Player[] reserve_best(int count)
+{
+    //按score从大到小取出前count个player进入下一轮
+    var new_player_list = new Player[PLAYER_COUNT];
+
+    for (int i = 0; i < count; ++ i)
+    {
+        int best_player_idx = i;
+        for (int j = i + 1; j < PLAYER_COUNT; ++ j)
+        {
+            if (player_list[j].score > player_list[best_player_idx].score)
+            {
+                best_player_idx = j;
+            }
+        }
+        var tmp = player_list[i];
+        player_list[i] = player_list[best_player_idx];
+        player_list[best_player_idx] = tmp;
+
+        //进入下一轮并清空积分
+        new_player_list[i] = player_list[i];
+        new_player_list[i].score = 0;
+    }
+
+    return new_player_list;
+}
+
 void random_train()
 {
+    player_list = new Player[PLAYER_COUNT];
+    for (int i = 0; i < PLAYER_COUNT; ++ i)
+    {
+        player_list[i] = new Player(i);
+    }
+    int next_idx = PLAYER_COUNT;
+
     while (true)
     {
-        player_list = new Player[PLAYER_COUNT];
-        for (int i = 0; i < PLAYER_COUNT; ++ i)
+        match();
+
+        //按score从大到小取出前三分之一player进入下一轮
+        var new_player_list = reserve_best(PLAYER_COUNT / 3);
+
+        //随机生成剩余player
+        for (int i = PLAYER_COUNT / 3; i < PLAYER_COUNT; ++ i)
         {
-            player_list[i] = new Player(i);
+            new_player_list[i] = new Player(next_idx);
+            ++ next_idx;
         }
 
-        match();
+        //开始下一轮比赛
+        player_list = new_player_list;
     }
 }
 
@@ -274,7 +315,7 @@ Player breed(Player a, Player b, int idx)
     return new_p;
 }
 
-void gene_train()
+void gene_train(int reserve_count)
 {
     player_list = new Player[PLAYER_COUNT];
 
@@ -286,31 +327,13 @@ void gene_train()
         match();
 
         //按score从大到小取出前一半player进入下一轮
-        var new_player_list = new Player[PLAYER_COUNT];
-        for (int i = 0; i < PLAYER_COUNT / 2; ++ i)
-        {
-            int best_player_idx = i;
-            for (int j = i + 1; j < PLAYER_COUNT; ++ j)
-            {
-                if (player_list[j].score > player_list[best_player_idx].score)
-                {
-                    best_player_idx = j;
-                }
-            }
-            var tmp = player_list[i];
-            player_list[i] = player_list[best_player_idx];
-            player_list[best_player_idx] = tmp;
-
-            //进入下一轮并清空积分
-            new_player_list[i] = player_list[i];
-            new_player_list[i].score = 0;
-        }
+        var new_player_list = reserve_best(reserve_count);
 
         //通过遗传杂交或变异生成剩余一半player
-        for (int i = PLAYER_COUNT / 2; i < PLAYER_COUNT; ++ i)
+        for (int i = reserve_count; i < PLAYER_COUNT; ++ i)
         {
-            var a = player_list[rand.rand_n((long)PLAYER_COUNT / 2)],
-                b = player_list[rand.rand_n((long)PLAYER_COUNT / 2)];
+            var a = player_list[rand.rand_n((long)reserve_count)],
+                b = player_list[rand.rand_n((long)reserve_count)];
             if (a == b)
             {
                 new_player_list[i] = mutate(a, next_idx);
@@ -342,6 +365,6 @@ public void main()
     feature_list = five_ai.train_get_feature_list();
 
     //random_train();
-    //gene_train();
+    //gene_train(PLAYER_COUNT / 5);
     last_train();
 }

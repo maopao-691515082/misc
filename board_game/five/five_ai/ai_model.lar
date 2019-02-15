@@ -285,6 +285,8 @@ final Pair<uint, double>[] RECOMMEND_WEIGHT = new Pair<uint, double>[]{
     2730: 1.2832408646135791,
 };
 
+final bool NO_SCORE_FACTOR = false;
+
 public void init_ai_model()
 {
     assert(FEATURE_LEN > 5, "bug"); //限制一下特征长度，需要比5大
@@ -313,6 +315,13 @@ public void init_ai_model()
     foreach (var f: zero_score_factor_feature_list.iter())
     {
         feature_info_map.pop(f);
+    }
+    if (NO_SCORE_FACTOR)
+    {
+        foreach (var kv: feature_info_map.iter())
+        {
+            kv.second.score_factor = 1.0;
+        }
     }
     foreach (var kv: feature_info_map.iter())
     {
