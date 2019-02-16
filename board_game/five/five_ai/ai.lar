@@ -229,7 +229,6 @@ class Stat
 
     double calc_score()
     {
-double ts = time.time();
         double score = 0.0;
         for (long i = 0; i < this.feature_map.size(); ++ i)
         {
@@ -239,7 +238,6 @@ double ts = time.time();
             }
             score += feature_score((uint)i) * (double)this.feature_map[i];
         }
-this.step_tm += time.time() - ts;
         return score;
     }
 
@@ -367,8 +365,6 @@ this.step_tm += time.time() - ts;
     char[][] playable;
     long cell_count;
     long[] feature_map; //{feature:count}
-
-    double step_tm;
 }
 
 final bool FOOLISH = false;
@@ -392,6 +388,5 @@ Pos ai_choice(char[][] board)
     var stat = new Stat(board);
     double score;
     var pos = stat.ai_choice(2, AI_DEEP, ref score, 0.0, false);
-    println("ppl time: %.2f sec".(stat.step_tm));
     return pos;
 }
