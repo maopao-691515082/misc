@@ -16,7 +16,7 @@ class Player
         this.weight_map = new util.HashMap<uint, double>(nil);
         foreach (var f: feature_list.iter())
         {
-            this.weight_map.set(f, math.exp(rand.random()));
+            this.weight_map.set(f, math.exp(rand.random() * 3));
         }
         this.score = 0;
     }
@@ -356,7 +356,16 @@ void last_train()
 
     load_best_ai("gene_train_best_ai");
 
-    match();
+    while (true)
+    {
+        match();
+
+        //清空score，反复进行比赛
+        foreach (var p: player_list.iter())
+        {
+            p.score = 0;
+        }
+    }
 }
 
 public void main()
@@ -364,7 +373,16 @@ public void main()
     five_ai.init_ai_model();
     feature_list = five_ai.train_get_feature_list();
 
-    //random_train();
-    //gene_train(PLAYER_COUNT / 5);
-    last_train();
+    if (os.args[1].eq("random"))
+    {
+        random_train();
+    }
+    else if (os.args[1].eq("gene"))
+    {
+        gene_train(PLAYER_COUNT / 5);
+    }
+    else if (os.args[1].eq("last"))
+    {
+        last_train();
+    }
 }
