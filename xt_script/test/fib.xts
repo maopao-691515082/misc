@@ -1,0 +1,11 @@
+a = 0;
+b = 1;
+loop {
+    if (b > 10000) {
+        break;
+    }
+    println(b);
+    c = a + b;
+    a = b;
+    b = c;
+}
