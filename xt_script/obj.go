@@ -13,6 +13,7 @@ type objIntf interface {
 	binocularOp(op string, other objIntf) objIntf
 	getAttr(attrName string) objIntf
 	call(argList []objIntf) objIntf
+	setItem(key objIntf, value objIntf)
 }
 
 type ObjBaseType struct {
@@ -53,6 +54,11 @@ func (o ObjBaseType) getAttr(attrName string) objIntf {
 }
 
 func (o ObjBaseType) call(argList []objIntf) objIntf {
-	exitWithErrMsg("unsupported call op for type '%s', or arg error", o.getType())
+	exitWithErrMsg("unsupported call op for type '%s'", o.getType())
+	panic("bug")
+}
+
+func (o ObjBaseType) setItem(key objIntf, value objIntf) {
+	exitWithErrMsg("unsupported setItem op for type '%s'", o.getType())
 	panic("bug")
 }

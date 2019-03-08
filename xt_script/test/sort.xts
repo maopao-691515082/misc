@@ -1,0 +1,25 @@
+l = [14, 13, 6, 16, 5, 10, 18, 12, 15, 3, 9, 17, 2, 4, 0, 11, 19, 7, 1, 8];
+i = 0;
+loop {
+    if (i == l.len()) {
+        break;
+    }
+    min_idx = i;
+    min_value = l[i];
+    j = i + 1;
+    loop {
+        if (j == l.len()) {
+            break;
+        }
+        if (l[j] < min_value) {
+            min_idx = j;
+            min_value = l[j];
+        }
+        j = j + 1;
+    }
+    tmp = l[i];
+    l[i] = l[min_idx];
+    l[min_idx] = tmp;
+    i = i + 1;
+}
+println(l);

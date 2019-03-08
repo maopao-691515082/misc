@@ -1,0 +1,11 @@
+l = [1, 2, 3];
+l.add(4, 5, 6);
+println(l);
+println(l.pop());
+println(l);
+l[0] = 123;
+println(l);
+len = l.len;
+println(len());
+l.add(7, 8);
+println(len());

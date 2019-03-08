@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 type strObjType struct {
 	ObjBaseType
 
@@ -19,7 +23,7 @@ func (this strObjType) asBool() bool {
 }
 
 func (this strObjType) asStr() string {
-	return this.v
+	return fmt.Sprintf("%q", this.v)
 }
 
 func (this strObjType) binocularOp(op string, otherObj objIntf) objIntf {

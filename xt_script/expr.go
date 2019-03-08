@@ -164,9 +164,9 @@ func parseExpr(tl *tokenListType) exprIntf {
 				eb := parseExpr(tl)
 				tl.popSym("]")
 				ea := stk.popExpr()
-				stk.pushExpr(opExpr{
-					op:   "[]",
-					args: []exprIntf{ea, eb},
+				stk.pushExpr(idxExpr{
+					e:  ea,
+					ei: eb,
 				})
 			} else if t.isSym("(") {
 				el := parseExprList(tl)

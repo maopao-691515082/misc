@@ -11,7 +11,7 @@ func (e opExpr) eval() objIntf {
 		return e.args[0].eval().unaryOp(e.op)
 	}
 	_, ok = binocularOpSet[e.op]
-	if ok || e.op == "[]" {
+	if ok {
 		return e.args[0].eval().binocularOp(e.op, e.args[1].eval())
 	}
 	if e.op == "()" {
@@ -61,8 +61,11 @@ type buildListExpr struct {
 }
 
 func (e buildListExpr) eval() objIntf {
-	//todo
-	return nil
+	objList := make([]objIntf, 0, len(e.el))
+	for _, expr := range e.el {
+		objList = append(objList, expr.eval())
+	}
+	return newList(objList)
 }
 
 type getAttrExpr struct {
@@ -71,6 +74,18 @@ type getAttrExpr struct {
 }
 
 func (e getAttrExpr) eval() objIntf {
-	//todo
-	return nil
+	return e.e.eval().getAttr(e.attrName)
+}
+
+type idxExpr struct {
+	e  exprIntf
+	ei exprIntf
+}
+
+func (e idxExpr) eval() objIntf {
+	return e.e.eval().binocularOp("[]", e.ei.eval())
+}
+
+func (e idxExpr) set(ve exprIntf) {
+	e.e.eval().setItem(e.ei.eval(), ve.eval())
 }

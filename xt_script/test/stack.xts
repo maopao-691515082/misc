@@ -1,0 +1,30 @@
+stk = [];
+rec_deep = 0;
+
+stk.add(3);
+rec_deep = rec_deep + 1;
+stat = 0;
+loop {
+    if (rec_deep == 0) {
+        break;
+    }
+    if (stat == 0) {
+        if (stk[-1] == 0) {
+            rec_deep = rec_deep - 1;
+            stat = 1;
+            continue;
+        }
+        println(stk[-1]);
+        stk.add(stk[-1] - 1);
+        rec_deep = rec_deep + 1;
+        stat = 0;
+    } else {
+        stk.pop();
+        println(stk[-1]);
+        rec_deep = rec_deep - 1;
+        stat = 1;
+    }
+}
+stk.pop();
+
+println(stk);
