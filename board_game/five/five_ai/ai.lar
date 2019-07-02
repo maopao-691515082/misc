@@ -223,7 +223,7 @@ class Stat
             }
         }
 
-        assert(pos_result != nil && score_result_inited, "bug");
+        assert(pos_result !== nil && score_result_inited, "bug");
         return pos_result;
     }
 

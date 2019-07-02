@@ -27,7 +27,7 @@ void work(net.TcpConn conn)
     defer
     {
         var c = catch<InvalidReq>();
-        if (c != nil)
+        if (c !== nil)
         {
             log("invalid req");
             log(c.traceback());

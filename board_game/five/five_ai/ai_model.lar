@@ -98,7 +98,7 @@ double[] score_map;
 FeatureInfo calc_feature_info(uint f)
 {
     var it = feature_info_map.find(f);
-    if (it != nil)
+    if (it !== nil)
     {
         return it.value();
     }

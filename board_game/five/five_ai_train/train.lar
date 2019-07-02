@@ -1,5 +1,5 @@
 import util, math/rand, math, io/bufio, time, os;
-import five_ai;
+import ../five_ai;
 
 final int PLAYER_COUNT = 10;
 final int SET_COUNT = 2;
@@ -267,7 +267,7 @@ void load_best_ai(String fn)
     for (int i = 0; i < PLAYER_COUNT; ++ i)
     {
         var p = new Player(i);
-        if (best_ai_file.read_line() != nil)
+        if (best_ai_file.read_line() !== nil)
         {
             for (long j = 0; j < feature_list.size(); ++ j)
             {
@@ -334,7 +334,7 @@ void gene_train(int reserve_count)
         {
             var a = player_list[rand.rand_n((long)reserve_count)],
                 b = player_list[rand.rand_n((long)reserve_count)];
-            if (a == b)
+            if (a === b)
             {
                 new_player_list[i] = mutate(a, next_idx);
             }
