@@ -246,7 +246,7 @@ public void init_ai_model()
     {
         if (kv.second.score_factor == 0.0)
         {
-            zero_score_factor_feature_list.add(kv.first);
+            zero_score_factor_feature_list.add(kv.first());
         }
     }
     foreach (var f: zero_score_factor_feature_list.iter())
@@ -262,12 +262,12 @@ public void init_ai_model()
     }
     foreach (var kv: feature_info_map.iter())
     {
-        weight_map.set(kv.first, 1);
+        weight_map.set(kv.first(), 1);
     }
     weight_map.update(RECOMMEND_WEIGHT.iter());
     foreach (var kv: feature_info_map.iter())
     {
-        score_map[kv.first] = kv.second.score_factor * weight_map.get(kv.first);
+        score_map[kv.first()] = kv.second.score_factor * weight_map.get(kv.first());
     }
 }
 

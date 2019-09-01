@@ -142,7 +142,7 @@ class Stat
             for (long y = y_min; y <= y_max; ++ y)
             {
                 var new_val = (int)this.playable[x][y] + adj;
-                assert(new_val >= 0, "bug");
+                debug.assert(new_val >= 0, "bug");
                 this.playable[x][y] = (char)new_val;
             }
         }
@@ -209,7 +209,7 @@ class Stat
             }
             else
             {
-                assert(cell_stat == 1, "bug");
+                debug.assert(cell_stat == 1, "bug");
                 if (!score_result_inited || score < score_result)
                 {
                     pos_result = pos;
@@ -223,7 +223,7 @@ class Stat
             }
         }
 
-        assert(pos_result !== nil && score_result_inited, "bug");
+        debug.assert(pos_result !== nil && score_result_inited, "bug");
         return pos_result;
     }
 
@@ -244,7 +244,7 @@ class Stat
     //模拟下子，修改状态
     void set_cell(char cell_stat, Pos pos)
     {
-        assert(this.board[pos.row][pos.col] == 0 && (cell_stat == 1 || cell_stat == 2), "bug");
+        debug.assert(this.board[pos.row][pos.col] == 0 && (cell_stat == 1 || cell_stat == 2), "bug");
 
         this.remove_feature_with_pos(pos);
 
@@ -258,7 +258,7 @@ class Stat
     //set_cell的反操作，回退之前的下子和状态变动
     void unset_cell(char cell_stat, Pos pos)
     {
-        assert((cell_stat == 1 || cell_stat == 2) && this.board[pos.row][pos.col] == cell_stat, "bug");
+        debug.assert((cell_stat == 1 || cell_stat == 2) && this.board[pos.row][pos.col] == cell_stat, "bug");
 
         this.remove_feature_with_pos(pos);
 

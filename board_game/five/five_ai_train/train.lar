@@ -122,7 +122,7 @@ void pk_one_set(Player x, Player y)
         debug.assert(board[row][col] == 0, "bug");
         board[row][col] = 1;
         ++ cell_count;
-        assert(cell_count <= CELL_COUNT, "bug");
+        debug.assert(cell_count <= CELL_COUNT, "bug");
         if (cell_count == CELL_COUNT)
         {
             ++ x.score;
@@ -137,10 +137,10 @@ void pk_one_set(Player x, Player y)
 
         //y执白
         five_ai.train_ai_choice(board, 2, ref row, ref col);
-        assert(board[row][col] == 0, "bug");
+        debug.assert(board[row][col] == 0, "bug");
         board[row][col] = 2;
         ++ cell_count;
-        assert(cell_count <= CELL_COUNT, "bug");
+        debug.assert(cell_count <= CELL_COUNT, "bug");
         if (cell_count == CELL_COUNT)
         {
             ++ x.score;
@@ -278,7 +278,7 @@ void load_best_ai(String fn)
                 p.weight_map.set(f, sv);
             }
             var empty_line = best_ai_file.read_line();
-            assert(empty_line.eq("\n"), "bug");
+            debug.assert(empty_line.eq("\n"), "bug");
         }
         player_list[i] = p;
     }
