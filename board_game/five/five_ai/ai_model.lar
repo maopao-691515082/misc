@@ -1,17 +1,17 @@
-import util;
+import util, debug;
 
 //feature按每2bit表示一个位置状态，例如“oo x o”表示为0b101000010010
 final uint FEATURE_LEN = 6;
 
 uint feature_stat(uint f, uint i)
 {
-    assert(i < FEATURE_LEN, "bug");
+    debug.assert(i < FEATURE_LEN, "bug");
     return (f >> (i * 2)) & 0b11;
 }
 
 void set_feature_stat(ref uint f, uint i, uint stat)
 {
-    assert(feature_stat(f, i) == 0 && stat <= 2, "bug");
+    debug.assert(feature_stat(f, i) == 0 && stat <= 2, "bug");
     f |= stat << (i * 2);
 }
 
@@ -44,10 +44,10 @@ uint rev_feature(uint f)
         }
         else
         {
-            assert(stat == 0, "bug");
+            debug.assert(stat == 0, "bug");
         }
     }
-    assert(std_feature(ref rev_f), "bug");
+    debug.assert(std_feature(ref rev_f), "bug");
     return rev_f;
 }
 
@@ -69,7 +69,7 @@ class FeatureInfo
 {
     FeatureInfo(uint[] step_2_count)
     {
-        assert(step_2_count.size() == 6, "bug");
+        debug.assert(step_2_count.size() == 6, "bug");
         this.step_2_count = step_2_count;
         this.score_factor = 0.0;
         double factor = 1.0;
@@ -136,7 +136,7 @@ FeatureInfo calc_feature_info(uint f)
             {
                 uint new_f = f;
                 set_feature_stat(ref new_f, i, 2);
-                assert(std_feature(ref new_f), "bug");
+                debug.assert(std_feature(ref new_f), "bug");
                 var feature_info = calc_feature_info(new_f);
                 for (uint step = 1; step < 6; ++ step)
                 {
@@ -226,7 +226,7 @@ final bool NO_SCORE_FACTOR = false;
 
 public void init_ai_model()
 {
-    assert(FEATURE_LEN > 5, "bug"); //限制一下特征长度，需要比5大
+    debug.assert(FEATURE_LEN > 5, "bug"); //限制一下特征长度，需要比5大
 
     feature_info_map = new util.HashMap<uint, FeatureInfo>(nil);
     weight_map = new util.HashMap<uint, double>(nil);
@@ -279,12 +279,12 @@ double feature_score(uint f)
 
 uint line_to_feature(char[] line)
 {
-    assert(line.size() == (long)FEATURE_LEN, "bug");
+    debug.assert(line.size() == (long)FEATURE_LEN, "bug");
     uint f = 0;
     for (uint i = 0; i < FEATURE_LEN; ++ i)
     {
         set_feature_stat(ref f, i, (uint)line[i]);
     }
-    assert(std_feature(ref f), "bug");
+    debug.assert(std_feature(ref f), "bug");
     return f;
 }

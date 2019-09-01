@@ -1,4 +1,4 @@
-import math/rand, util, time;
+import math/rand, util, time, debug;
 
 final int AI_DEEP = 2;
 
@@ -108,7 +108,7 @@ class Stat
         if (feature_score(f) != 0.0)
         {
             var count = this.feature_map[f] + adj;
-            assert(count >= 0, "bug");
+            debug.assert(count >= 0, "bug");
             this.feature_map[f] = count;
         }
     }

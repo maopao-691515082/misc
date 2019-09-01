@@ -1,4 +1,4 @@
-import util, math/rand, math, io/bufio, time, os;
+import util, math/rand, math, io/bufio, time, os, debug;
 import ../five_ai;
 
 final int PLAYER_COUNT = 10;
@@ -42,7 +42,7 @@ bool check_winner(char[] line, char win_stat, Player p)
     {
         return false;
     }
-    assert(stat == win_stat, "bug");
+    debug.assert(stat == win_stat, "bug");
     p.score += 2;
     println("#%s win".(p.idx));
     return true;
@@ -119,7 +119,7 @@ void pk_one_set(Player x, Player y)
 
         //x执黑
         five_ai.train_ai_choice(board, 1, ref row, ref col);
-        assert(board[row][col] == 0, "bug");
+        debug.assert(board[row][col] == 0, "bug");
         board[row][col] = 1;
         ++ cell_count;
         assert(cell_count <= CELL_COUNT, "bug");
@@ -182,7 +182,7 @@ void output_result()
         out_file.write_line("#%s: %s".(p.idx, p.score));
         foreach (var kv: p.weight_map.iter())
         {
-            out_file.write_line("%s\t%s".(kv.first, kv.second));
+            out_file.write_line("%s\t%s".(kv.first(), kv.second()));
         }
         out_file.write_line("");
     }
@@ -272,7 +272,7 @@ void load_best_ai(String fn)
             for (long j = 0; j < feature_list.size(); ++ j)
             {
                 var sl = best_ai_file.read_line().split(nil, -1L);
-                assert(sl.size() == 2, "bug");
+                debug.assert(sl.size() == 2, "bug");
                 var f = (uint)sl[0].parse_long(0);
                 var sv = sl[1].parse_double();
                 p.weight_map.set(f, sv);
