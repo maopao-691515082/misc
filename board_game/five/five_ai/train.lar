@@ -17,12 +17,12 @@ public void train_init_player(util.HashMap<uint, double> weight_map_1, util.Hash
     score_map_1 = new double[1 << (2 * FEATURE_LEN)];
     foreach (var kv: feature_info_map.iter())
     {
-        score_map_1[kv.first()] = kv.second.score_factor * weight_map_1.get(kv.first());
+        score_map_1[kv.first()] = kv.second().score_factor * weight_map_1.get(kv.first());
     }
     score_map_2 = new double[1 << (2 * FEATURE_LEN)];
     foreach (var kv: feature_info_map.iter())
     {
-        score_map_2[kv.first()] = kv.second.score_factor * weight_map_2.get(kv.first());
+        score_map_2[kv.first()] = kv.second().score_factor * weight_map_2.get(kv.first());
     }
 }
 

@@ -244,7 +244,7 @@ public void init_ai_model()
     var zero_score_factor_feature_list = new util.Vector<uint>(nil);
     foreach (var kv: feature_info_map.iter())
     {
-        if (kv.second.score_factor == 0.0)
+        if (kv.second().score_factor == 0.0)
         {
             zero_score_factor_feature_list.add(kv.first());
         }
@@ -257,7 +257,7 @@ public void init_ai_model()
     {
         foreach (var kv: feature_info_map.iter())
         {
-            kv.second.score_factor = 1.0;
+            kv.second().score_factor = 1.0;
         }
     }
     foreach (var kv: feature_info_map.iter())
@@ -267,7 +267,7 @@ public void init_ai_model()
     weight_map.update(RECOMMEND_WEIGHT.iter());
     foreach (var kv: feature_info_map.iter())
     {
-        score_map[kv.first()] = kv.second.score_factor * weight_map.get(kv.first());
+        score_map[kv.first()] = kv.second().score_factor * weight_map.get(kv.first());
     }
 }
 
