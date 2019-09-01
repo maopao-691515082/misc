@@ -1,5 +1,4 @@
 import sys, os, socket, json, copy
-import board_game
 
 AI_DEBUG = False
 
@@ -72,7 +71,7 @@ class _Game:
     def ai_choice(self, board):
         s = socket.socket()
         s.settimeout(10)
-        s.connect(("localhost", 9999))
+        s.connect(ai_svr_addr)
         msg = json.dumps(board)
         s.sendall(msg)
         s.shutdown(socket.SHUT_WR)
@@ -121,10 +120,20 @@ class _Game:
                         self.set_stat(GAME_STAT_OVER)
                         return
 
+ai_svr_addr = None
+board_game = None
+
 def main():
+    global ai_svr_addr, board_game
+
     prog_dir = os.path.dirname(sys.argv[0])
     if prog_dir:
         os.chdir(prog_dir)
+    sys.path.append("..")
+    import board_game
+
+    host, port = sys.argv[1].split(":")
+    ai_svr_addr = host, int(port)
 
     _Game()
 
