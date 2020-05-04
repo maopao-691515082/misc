@@ -27,7 +27,7 @@ bool std_feature(ref uint f)
         }
         set_feature_stat(ref rf, FEATURE_LEN - 1 - i, stat);
     }
-    f = util.min(f, rf);
+    f = min(f, rf);
     return true;
 }
 
@@ -77,11 +77,11 @@ class FeatureInfo
         {
             if (i == 0)
             {
-                this.score_factor += factor * (double)this.step_2_count[i] * 1e10;
+                this.score_factor += factor * cast<double>(this.step_2_count[i]) * 1e10;
             }
             else
             {
-                this.score_factor += factor * (double)this.step_2_count[i];
+                this.score_factor += factor * cast<double>(this.step_2_count[i]);
             }
             factor /= 16.0;
         }
@@ -279,11 +279,11 @@ double feature_score(uint f)
 
 uint line_to_feature(char[] line)
 {
-    debug.assert(line.size() == (long)FEATURE_LEN, "bug");
+    debug.assert(line.size() == cast<long>(FEATURE_LEN), "bug");
     uint f = 0;
     for (uint i = 0; i < FEATURE_LEN; ++ i)
     {
-        set_feature_stat(ref f, i, (uint)line[i]);
+        set_feature_stat(ref f, i, cast<uint>(line[i]));
     }
     debug.assert(std_feature(ref f), "bug");
     return f;

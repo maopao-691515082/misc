@@ -24,19 +24,20 @@ void work(net.TcpConn conn)
 
     var start_time = time.time();
 
-    defer
-    {
-        var c = catch<InvalidReq>();
-        if (c !== nil)
+    defer handle_exc([]{
+        public void handle(Catched<InvalidReq> c)
         {
-            log("invalid req");
-            log(c.traceback());
+            if (c !== nil)
+            {
+                log("invalid req");
+                log(c.traceback());
+            }
+            else
+            {
+                log("time cost: %.2f sec".(time.time() - start_time));
+            }
         }
-        else
-        {
-            log("time cost: %.2f sec".(time.time() - start_time));
-        }
-    }
+    });
 
     log("start calc");
 
@@ -63,7 +64,7 @@ void work(net.TcpConn conn)
     !>>
 
     //特殊规定：棋盘至少要比ai的特征长度大，不然没法分析了
-    if (board_size <= (long)FEATURE_LEN)
+    if (board_size <= cast<long>(FEATURE_LEN))
     {
         throw(new InvalidReq());
     }
@@ -75,7 +76,7 @@ void work(net.TcpConn conn)
         bool ok = false;
         !<<
         if int64(copy(l_row.arr, board[l_i])) == l_board_size {
-            l_ok = true;
+            l_ok = true
         }
         !>>
         if (!ok)

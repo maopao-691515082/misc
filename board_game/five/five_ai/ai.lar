@@ -51,16 +51,16 @@ class Stat
             for (long col = 0; col < this.board_size; ++ col)
             {
                 //横向
-                if (col + (long)FEATURE_LEN <= this.board_size)
+                if (col + cast<long>(FEATURE_LEN) <= this.board_size)
                 {
-                    this.inc_feature(this.board[row][col : col + (long)FEATURE_LEN]);
+                    this.inc_feature(this.board[row][col : col + cast<long>(FEATURE_LEN)]);
                 }
 
                 //纵向
-                if (row + (long)FEATURE_LEN <= this.board_size)
+                if (row + cast<long>(FEATURE_LEN) <= this.board_size)
                 {
                     var line = new char[FEATURE_LEN];
-                    for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                    for (long i = 0; i < cast<long>(FEATURE_LEN); ++ i)
                     {
                         line[i] = this.board[row + i][col];
                     }
@@ -68,10 +68,10 @@ class Stat
                 }
 
                 //右下方
-                if (row + (long)FEATURE_LEN <= this.board_size && col + (long)FEATURE_LEN <= this.board_size)
+                if (row + cast<long>(FEATURE_LEN) <= this.board_size && col + cast<long>(FEATURE_LEN) <= this.board_size)
                 {
                     var line = new char[FEATURE_LEN];
-                    for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                    for (long i = 0; i < cast<long>(FEATURE_LEN); ++ i)
                     {
                         line[i] = this.board[row + i][col + i];
                     }
@@ -79,10 +79,10 @@ class Stat
                 }
 
                 //左下方
-                if (row + (long)FEATURE_LEN <= this.board_size && col - ((long)FEATURE_LEN - 1) >= 0)
+                if (row + cast<long>(FEATURE_LEN) <= this.board_size && col - (cast<long>(FEATURE_LEN) - 1) >= 0)
                 {
                     var line = new char[FEATURE_LEN];
-                    for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                    for (long i = 0; i < cast<long>(FEATURE_LEN); ++ i)
                     {
                         line[i] = this.board[row + i][col - i];
                     }
@@ -133,17 +133,17 @@ class Stat
         {
             range = 1;
         }
-        var x_min = util.max(0L, row - range),
-            x_max = util.min(this.board_size - 1, row + range),
-            y_min = util.max(0L, col - range),
-            y_max = util.min(this.board_size - 1, col + range);
+        var x_min = max(0L, row - range),
+            x_max = min(this.board_size - 1, row + range),
+            y_min = max(0L, col - range),
+            y_max = min(this.board_size - 1, col + range);
         for (long x = x_min; x <= x_max; ++ x)
         {
             for (long y = y_min; y <= y_max; ++ y)
             {
-                var new_val = (int)this.playable[x][y] + adj;
+                var new_val = cast<int>(this.playable[x][y]) + adj;
                 debug.assert(new_val >= 0, "bug");
-                this.playable[x][y] = (char)new_val;
+                this.playable[x][y] = cast<char>(new_val);
             }
         }
     }
@@ -236,7 +236,7 @@ class Stat
             {
                 continue;
             }
-            score += feature_score((uint)i) * (double)this.feature_map[i];
+            score += feature_score(cast<uint>(i)) * cast<double>(this.feature_map[i]);
         }
         return score;
     }
@@ -305,21 +305,21 @@ class Stat
         var line = new char[FEATURE_LEN];
 
         //横向
-        for (long col = pos.col - ((long)FEATURE_LEN - 1); col <= pos.col; ++ col)
+        for (long col = pos.col - (cast<long>(FEATURE_LEN) - 1); col <= pos.col; ++ col)
         {
-            if (col >= 0 && col + (long)FEATURE_LEN <= this.board_size)
+            if (col >= 0 && col + cast<long>(FEATURE_LEN) <= this.board_size)
             {
                 //adj_func.call(this.board[pos.row][col : col + (long)FEATURE_LEN]);
-                this.adjust_feature_count(this.board[pos.row][col : col + (long)FEATURE_LEN], adj_count);
+                this.adjust_feature_count(this.board[pos.row][col : col + cast<long>(FEATURE_LEN)], adj_count);
             }
         }
 
         //纵向
-        for (long row = pos.row - ((long)FEATURE_LEN - 1); row <= pos.row; ++ row)
+        for (long row = pos.row - (cast<long>(FEATURE_LEN) - 1); row <= pos.row; ++ row)
         {
-            if (row >= 0 && row + (long)FEATURE_LEN <= this.board_size)
+            if (row >= 0 && row + cast<long>(FEATURE_LEN) <= this.board_size)
             {
-                for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                for (long i = 0; i < cast<long>(FEATURE_LEN); ++ i)
                 {
                     line[i] = this.board[row + i][pos.col];
                 }
@@ -329,12 +329,13 @@ class Stat
         }
 
         //左上到右下
-        for (long row = pos.row - ((long)FEATURE_LEN - 1), col = pos.col - ((long)FEATURE_LEN - 1); row <= pos.row && col <= pos.col;
-             ++ row, ++ col)
+        for (long row = pos.row - (cast<long>(FEATURE_LEN) - 1), col = pos.col - (cast<long>(FEATURE_LEN) - 1);
+             row <= pos.row && col <= pos.col; ++ row, ++ col)
         {
-            if (row >= 0 && row + (long)FEATURE_LEN <= this.board_size && col >= 0 && col + (long)FEATURE_LEN <= this.board_size)
+            if (row >= 0 && row + cast<long>(FEATURE_LEN) <= this.board_size && col >= 0 &&
+                col + cast<long>(FEATURE_LEN) <= this.board_size)
             {
-                for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                for (long i = 0; i < cast<long>(FEATURE_LEN); ++ i)
                 {
                     line[i] = this.board[row + i][col + i];
                 }
@@ -344,12 +345,13 @@ class Stat
         }
 
         //右上到左下
-        for (long row = pos.row - ((long)FEATURE_LEN - 1), col = pos.col + ((long)FEATURE_LEN - 1); row <= pos.row && col >= pos.col;
-             ++ row, -- col)
+        for (long row = pos.row - (cast<long>(FEATURE_LEN) - 1), col = pos.col + (cast<long>(FEATURE_LEN) - 1);
+             row <= pos.row && col >= pos.col; ++ row, -- col)
         {
-            if (row >= 0 && row + (long)FEATURE_LEN <= this.board_size && col - ((long)FEATURE_LEN - 1) >= 0 && col < this.board_size)
+            if (row >= 0 && row + cast<long>(FEATURE_LEN) <= this.board_size && col - (cast<long>(FEATURE_LEN) - 1) >= 0 &&
+                col < this.board_size)
             {
-                for (long i = 0; i < (long)FEATURE_LEN; ++ i)
+                for (long i = 0; i < cast<long>(FEATURE_LEN); ++ i)
                 {
                     line[i] = this.board[row + i][col - i];
                 }
