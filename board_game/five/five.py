@@ -15,14 +15,14 @@ class _Game:
         self.board_game.run()
 
     def init(self):
-        for row in xrange(BOARD_SIZE):
-            for col in xrange(BOARD_SIZE):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
                 self.set_cell_stat(row, col, 0)
         self.set_stat(GAME_STAT_HUMAN)
 
     def set_cell_stat(self, row, col, stat):
         if stat != 0:
-            print "%-10s%s" % ("human" if stat == 1 else "ai", board_game.fmt_pos(row, col))
+            print("%-10s%s" % ("human" if stat == 1 else "ai", board_game.fmt_pos(row, col)))
         self.board_game.set_cell_stat(row, col, stat, set_play_seq = stat != 0)
 
     def notify(self, text):
@@ -48,8 +48,8 @@ class _Game:
             assert AI_DEBUG
             board = self.board_game.get_board()
             rev_board = copy.deepcopy(board)
-            for row in xrange(BOARD_SIZE):
-                for col in xrange(BOARD_SIZE):
+            for row in range(BOARD_SIZE):
+                for col in range(BOARD_SIZE):
                     if rev_board[row][col] != 0:
                         rev_board[row][col] = 3 - rev_board[row][col]
             row, col = self.ai_choice(rev_board)
@@ -73,14 +73,14 @@ class _Game:
         s.settimeout(10)
         s.connect(ai_svr_addr)
         msg = json.dumps(board)
-        s.sendall(msg)
+        s.sendall(msg.encode("ascii"))
         s.shutdown(socket.SHUT_WR)
         rsp = ""
         while True:
             data = s.recv(10000)
-            if data == "":
+            if not data:
                 break
-            rsp += data
+            rsp += data.decode("ascii")
         row, col = json.loads(rsp)
         if row >= BOARD_SIZE or col >= BOARD_SIZE:
             raise Exception("invalid row or col")
@@ -103,17 +103,17 @@ class _Game:
             s = set([stat for stat in line])
             if len(s) == 1:
                 return list(s)[0]
-        for row in xrange(BOARD_SIZE):
-            for col in xrange(BOARD_SIZE):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
                 line_list = []
                 if col + 5 <= BOARD_SIZE:
                     line_list.append(board[row][col : col + 5])
                 if row + 5 <= BOARD_SIZE:
-                    line_list.append([board[row + i][col] for i in xrange(5)])
+                    line_list.append([board[row + i][col] for i in range(5)])
                 if row + 5 <= BOARD_SIZE and col + 5 <= BOARD_SIZE:
-                    line_list.append([board[row + i][col + i] for i in xrange(5)])
+                    line_list.append([board[row + i][col + i] for i in range(5)])
                 if row + 5 <= BOARD_SIZE and col >= 4:
-                    line_list.append([board[row + i][col - i] for i in xrange(5)])
+                    line_list.append([board[row + i][col - i] for i in range(5)])
                 for line in line_list:
                     winner = get_winner(line)
                     if winner == 1 or winner == 2:
