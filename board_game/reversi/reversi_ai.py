@@ -36,8 +36,8 @@ def _ai_choice(board, stat, deep, ab_score_result):
         return None, 0
 
     valid_choice_list = []
-    for row in xrange(reversi.BOARD_SIZE):
-        for col in xrange(reversi.BOARD_SIZE):
+    for row in range(reversi.BOARD_SIZE):
+        for col in range(reversi.BOARD_SIZE):
             if board[row][col] == 0 and try_set_cell(board, row, col, 2, only_judge = True):
                 valid_choice_list.append((row, col))
     random.shuffle(valid_choice_list)

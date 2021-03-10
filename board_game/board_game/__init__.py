@@ -30,7 +30,7 @@ class _Cell(kivy.uix.image.Image):
         p = kivy.uix.label.Label(text = "")
         p.size = intf.cell_size, intf.cell_size
         p.bold = True
-        p.font_size = intf.cell_size / 2
+        p.font_size = intf.cell_size // 2
         p.color = [0, 0, 0, 1]
         p.pos = self.pos
         self.play_seq_label = p
@@ -65,7 +65,7 @@ class _Intf(kivy.uix.widget.Widget):
         self.init_game = init_game
         self.touch_down_cb = touch_down_cb
 
-        self.cell_size = 900 / board_size
+        self.cell_size = 900 // board_size
         if self.cell_size > 100:
             self.cell_size = 100
 
@@ -74,16 +74,16 @@ class _Intf(kivy.uix.widget.Widget):
             kivy.graphics.Color(rgb = [0.5, 0.5, 0.5])
             kivy.graphics.Rectangle(size = self.size)
 
-        self.board = [[None] * self.board_size for _ in xrange(self.board_size)]
+        self.board = [[None] * self.board_size for _ in range(self.board_size)]
 
-        for row in xrange(self.board_size):
-            for col in xrange(self.board_size):
+        for row in range(self.board_size):
+            for col in range(self.board_size):
                 cell = _Cell(self, row, col)
                 self.board[row][col] = cell
                 self.add_widget(cell)
                 self.add_widget(cell.play_seq_label)
 
-        for i in xrange(self.board_size):
+        for i in range(self.board_size):
             x, y = 100 + i * self.cell_size, 100 - self.cell_size
             for pos, is_row in ((x, y), True), ((y, x), False):
                 p = kivy.uix.label.Label(text = _fmt_pos_num(i, is_row))
@@ -157,7 +157,7 @@ class Game:
         self.intf.set_cell_stat(row, col, stat, set_play_seq = set_play_seq)
 
 def _fmt_pos_num(n, is_row):
-    letters = string.letters[: 26]
+    letters = string.ascii_letters[: 26]
     if is_row:
         letters = letters.upper()
     return letters[n]
