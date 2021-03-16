@@ -70,7 +70,7 @@ class _Game:
 
     def ai_choice(self, board):
         s = socket.socket()
-        s.settimeout(10)
+        s.settimeout(100)
         s.connect(ai_svr_addr)
         msg = json.dumps(board)
         s.sendall(msg.encode("ascii"))

@@ -1,6 +1,8 @@
-import math/rand, util, time, debug;
+import math/rand, util, time, debug, fiber;
 
-final int AI_DEEP = 2;
+final int AI_DEEP = 4;
+
+final long AI_FIBER_COUNT = 8;
 
 class Pos
 {
@@ -22,7 +24,7 @@ class Stat
 {
     Stat(char[][] board)
     {
-        this.board = board;
+        this.board = board.deep_copy();
         this.board_size = board.size();
         this.pos_list = new util.Vector<Pos>(nil);
         this.playable = new char[this.board_size][this.board_size];
@@ -170,7 +172,8 @@ class Stat
         return l;
     }
 
-    Pos ai_choice(char cell_stat, int deep, ref double score_result, double ab_score_result, bool ab_score_result_inited)
+    Pos ai_choice(long fiber_idx, char cell_stat, int deep, ref double score_result, double ab_score_result,
+                  bool ab_score_result_inited)
     {
         if (deep <= 0)
         {
@@ -189,9 +192,13 @@ class Stat
         bool score_result_inited = false;
         foreach (var pos: ppl.iter())
         {
+            if (score_result_inited && fiber_idx >= 0 && (pos.row + pos.col) % AI_FIBER_COUNT != fiber_idx)
+            {
+                continue;
+            }
             this.set_cell(cell_stat, pos);
             double score;
-            this.ai_choice(3 - cell_stat, deep - 1, ref score, score_result, score_result_inited);
+            this.ai_choice(-1L, 3 - cell_stat, deep - 1, ref score, score_result, score_result_inited);
             this.unset_cell(cell_stat, pos);
 
             if (cell_stat == 2)
@@ -281,21 +288,6 @@ class Stat
 
     void adjust_feature_count_with_pos(Pos pos, bool is_dec)
     {
-        /*
-        var adj_func = []{
-            void call(char[] line)
-            {
-                if (is_dec)
-                {
-                    this.dec_feature(line);
-                }
-                else
-                {
-                    this.inc_feature(line);
-                }
-            }
-        };
-        */
         long adj_count = 1;
         if (is_dec)
         {
@@ -309,7 +301,6 @@ class Stat
         {
             if (col >= 0 && col + cast<long>(FEATURE_LEN) <= this.board_size)
             {
-                //adj_func.call(this.board[pos.row][col : col + (long)FEATURE_LEN]);
                 this.adjust_feature_count(this.board[pos.row][col : col + cast<long>(FEATURE_LEN)], adj_count);
             }
         }
@@ -323,7 +314,6 @@ class Stat
                 {
                     line[i] = this.board[row + i][pos.col];
                 }
-                //adj_func.call(line);
                 this.adjust_feature_count(line, adj_count);
             }
         }
@@ -339,7 +329,6 @@ class Stat
                 {
                     line[i] = this.board[row + i][col + i];
                 }
-                //adj_func.call(line);
                 this.adjust_feature_count(line, adj_count);
             }
         }
@@ -355,7 +344,6 @@ class Stat
                 {
                     line[i] = this.board[row + i][col - i];
                 }
-                //adj_func.call(line);
                 this.adjust_feature_count(line, adj_count);
             }
         }
@@ -387,8 +375,27 @@ Pos ai_choice(char[][] board)
         }
         throw("full");
     }
-    var stat = new Stat(board);
-    double score;
-    var pos = stat.ai_choice(2, AI_DEEP, ref score, 0.0, false);
+    var result_chan = new Chan<Pair<Pos, double>>(AI_FIBER_COUNT);
+    for (long i = 0; i < AI_FIBER_COUNT; ++ i)
+    {
+        var fiber_idx = i;
+        var stat = new Stat(board);
+        fiber.start_new([-] {
+            double score;
+            var pos = stat.ai_choice(fiber_idx, 2, AI_DEEP, ref score, 0.0, false);
+            result_chan.send(make_pair(pos, score));
+        });
+    }
+    Pos pos = nil;
+    double score = -1.0;
+    for (long i = 0; i < AI_FIBER_COUNT; ++ i)
+    {
+        var result = result_chan.recv(ref _);
+        if (result.second() > score)
+        {
+            pos = result.first();
+            score = result.second();
+        }
+    }
     return pos;
 }
