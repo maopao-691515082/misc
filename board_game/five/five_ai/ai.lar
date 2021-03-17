@@ -2,8 +2,6 @@ import math/rand, util, time, debug, fiber;
 
 final int AI_DEEP = 4;
 
-final long AI_FIBER_COUNT = 8;
-
 class Pos
 {
     Pos(long row, long col)
@@ -172,7 +170,7 @@ class Stat
         return l;
     }
 
-    Pos ai_choice(long fiber_idx, char cell_stat, int deep, ref double score_result, double ab_score_result,
+    Pos ai_choice(Pos first_pos, char cell_stat, int deep, ref double score_result, double ab_score_result,
                   bool ab_score_result_inited)
     {
         if (deep <= 0)
@@ -181,24 +179,28 @@ class Stat
             return nil;
         }
 
-        var ppl = this.playable_pos_list();
-        if (ppl.size() == 0)
+        util.Vector<Pos> ppl;
+        if (first_pos === nil)
         {
-            score_result = this.calc_score();
-            return nil;
+            ppl = this.playable_pos_list();
+            if (ppl.size() == 0)
+            {
+                score_result = this.calc_score();
+                return nil;
+            }
+        }
+        else
+        {
+            ppl = new util.Vector<Pos>(new Pos[]{first_pos}.iter());
         }
 
         Pos pos_result = nil;
         bool score_result_inited = false;
         foreach (var pos: ppl.iter())
         {
-            if (score_result_inited && fiber_idx >= 0 && (pos.row + pos.col) % AI_FIBER_COUNT != fiber_idx)
-            {
-                continue;
-            }
             this.set_cell(cell_stat, pos);
             double score;
-            this.ai_choice(-1L, 3 - cell_stat, deep - 1, ref score, score_result, score_result_inited);
+            this.ai_choice(nil, 3 - cell_stat, deep - 1, ref score, score_result, score_result_inited);
             this.unset_cell(cell_stat, pos);
 
             if (cell_stat == 2)
@@ -375,27 +377,29 @@ Pos ai_choice(char[][] board)
         }
         throw("full");
     }
-    var result_chan = new Chan<Pair<Pos, double>>(AI_FIBER_COUNT);
-    for (long i = 0; i < AI_FIBER_COUNT; ++ i)
+    var ppl = new Stat(board).playable_pos_list();
+    var result_chan = new Chan<Pair<Pos, double>>(ppl.size());
+    for (long i = 0; i < ppl.size(); ++ i)
     {
-        var fiber_idx = i;
+        var first_pos = ppl.get(i);
         var stat = new Stat(board);
         fiber.start_new([-] {
             double score;
-            var pos = stat.ai_choice(fiber_idx, 2, AI_DEEP, ref score, 0.0, false);
+            var pos = stat.ai_choice(first_pos, 2, AI_DEEP, ref score, 0.0, false);
             result_chan.send(make_pair(pos, score));
         });
     }
     Pos pos = nil;
-    double score = -1.0;
-    for (long i = 0; i < AI_FIBER_COUNT; ++ i)
+    double score = 0.0;
+    for (long i = 0; i < ppl.size(); ++ i)
     {
         var result = result_chan.recv(ref _);
-        if (result.second() > score)
+        if (pos === nil || result.second() > score)
         {
             pos = result.first();
             score = result.second();
         }
     }
+    debug.assert(pos !== nil, "bug");
     return pos;
 }
