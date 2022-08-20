@@ -1,5 +1,4 @@
 import sys, os, copy
-import board_game
 import reversi_ai
 
 AI_DEBUG = False
@@ -104,10 +103,16 @@ class _Game:
             return
         self.set_stat(GAME_STAT_OVER)
 
+board_game = None
+
 def main():
+    global board_game
+
     prog_dir = os.path.dirname(sys.argv[0])
     if prog_dir:
         os.chdir(prog_dir)
+    sys.path.append("..")
+    import board_game
 
     _Game()
 

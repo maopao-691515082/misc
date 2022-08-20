@@ -98,9 +98,9 @@ class _Intf(kivy.uix.widget.Widget):
         self.notify_pad = kivy.uix.label.Label(text = "Notify")
         self.notify_pad.size = 300, 50
         self.notify_pad.bold = True
-        self.notify_pad.font_size = 50
+        self.notify_pad.font_size = 25
         self.notify_pad.color = [1, 1, 1, 1]
-        self.notify_pad.pos = 1200, 550
+        self.notify_pad.pos = 500, 250
         self.add_widget(self.notify_pad)
 
         self.init_game()
