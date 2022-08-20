@@ -1,6 +1,6 @@
 import math/rand, util, time, debug, fiber;
 
-final int AI_DEEP = 4;
+final int AI_DEEP = 2;
 
 class Pos
 {

@@ -68,6 +68,7 @@ class _Intf(kivy.uix.widget.Widget):
         self.cell_size = 900 // board_size
         if self.cell_size > 100:
             self.cell_size = 100
+        self.cell_size /= 2
 
     def init(self):
         with self.canvas:

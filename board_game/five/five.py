@@ -72,7 +72,7 @@ class _Game:
         s = socket.socket()
         s.settimeout(100)
         s.connect(ai_svr_addr)
-        msg = json.dumps(board)
+        msg = "|".join([",".join(["%d" % c for c in row]) for row in board])
         s.sendall(msg.encode("ascii"))
         s.shutdown(socket.SHUT_WR)
         rsp = ""
@@ -81,7 +81,7 @@ class _Game:
             if not data:
                 break
             rsp += data.decode("ascii")
-        row, col = json.loads(rsp)
+        row, col = [int(i) for i in rsp.split(",")]
         if row >= BOARD_SIZE or col >= BOARD_SIZE:
             raise Exception("invalid row or col")
         return row, col

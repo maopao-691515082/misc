@@ -1,13 +1,5 @@
 import time, net, util;
 
-!<<
-
-import (
-    "encoding/json"
-)
-
-!>>
-
 void log(String msg)
 {
     println("[%s] %s".(time.format_time("2006-01-02 15:04:05", time.time()), msg));
@@ -41,6 +33,8 @@ void work(net.TcpConn conn)
 
     log("start calc");
 
+    //请求协议：竖线分隔棋盘的行，每行是逗号分隔，每个点的状态：0 空白；1 黑棋；2 白棋
+
     var req = new util.Vector<char>(nil);
     for (;;)
     {
@@ -52,16 +46,8 @@ void work(net.TcpConn conn)
         }
         req.extend(buf[: sz].iter());
     }
-    var req_arr = req.to_array();
-
-    long board_size = 0;
-    !<<
-    var board [][]uint8
-    err := json.Unmarshal(l_req_arr.arr, &board)
-    if err == nil {
-        l_board_size = int64(len(board))
-    }
-    !>>
+    var req_rows = new String(req.to_array()).split("|");
+    long board_size = req_rows.size();
 
     //特殊规定：棋盘至少要比ai的特征长度大，不然没法分析了
     if (board_size <= cast<long>(FEATURE_LEN))
@@ -69,26 +55,32 @@ void work(net.TcpConn conn)
         throw(new InvalidReq());
     }
 
-    var board = new char[board_size][board_size];
+    var board = new char[board_size][];
     for (long i = 0; i < board_size; ++ i)
     {
-        var row = board[i];
-        bool ok = false;
-        !<<
-        if int64(copy(l_row.arr, board[l_i])) == l_board_size {
-            l_ok = true
-        }
-        !>>
-        if (!ok)
+        var req_row = req_rows[i].split(",");
+        if (req_row.size() != board_size)
         {
             throw(new InvalidReq());
         }
+        var row = new char[board_size];
+        for (long j = 0; j < board_size; ++ j)
+        {
+            long cell_stat = req_row[j].parse_long(0);
+            if (cell_stat != 0 && cell_stat != 1 && cell_stat != 2)
+            {
+                throw(new InvalidReq());
+            }
+            row[j] = cast<char>(cell_stat);
+        }
+        board[i] = row;
     }
 
     var pos = ai_choice(board);
 
+    //回复协议：逗号分隔的x,y坐标
     log("%s".(pos));
-    conn.write("[%s, %s]".(pos.row, pos.col).to_char_array());
+    conn.write("%s,%s".(pos.row, pos.col).to_char_array());
 }
 
 public void main()
